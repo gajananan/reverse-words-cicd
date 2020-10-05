@@ -7,12 +7,12 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-        - name: registry-secret
       containers:
       - env:
         - name: RELEASE
           value: Stage Release
         - $patch: replace
-        image: quay.io/gajananan/tekton-reversewords:862bb54b2ac7d22cc1e9ca6a04d0c04450db382e
+        image: quay.io/gajananan/tekton-reversewords:065dab5fe778eba90ec885f17db9c5af8cdccb9c
         name: reverse-words
+      imagePullSecrets:
+      - name: registry-secret
