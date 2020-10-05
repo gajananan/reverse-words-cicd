@@ -1,0 +1,268 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: ie-artifact-signing-task
+spec:
+  inputs:
+    resources:
+    - name: cicd
+      type: git
+    params:
+    - name: pre-stage-branch
+      type: string
+      description: Branch for stage environment on the git repository
+    - name: signer-email
+      type: string 
+      description:  email of the artifacts signer 
+  volumes:
+    - name: kubeconfig-secret-volume
+      secret:
+        secretName: ie-kubeconfig-secret
+  steps:
+    - name: clone-staging-release
+      image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
+      workingdir: /workspace/cicd
+      script: |
+        #!/bin/bash
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Checkout cicd pre-stage branch"  
+        git fetch &> /dev/null
+        git checkout "$(params.pre-stage-branch)" &> /dev/null
+        pwd
+        ls
+        echo done
+  
+        echo ""
+        echo "---------------------------------------------------------"  
+        echo "Adding argocd wave annotation"        
+        echo "Before"
+        cat kustomization.yaml
+        echo ""
+        cat kustomization.yaml | yq r - -j | jq -r '.commonAnnotations."argocd.argoproj.io/sync-wave"="0"' | yq r - --prettyPrint >>  copykustomization.yaml
+        mv copykustomization.yaml kustomization.yaml
+        yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
+        yq d -i kustomization.yaml 'resources.[rpp-merged.yaml]'
+        echo ""
+        echo "After"
+        cat kustomization.yaml
+        echo done
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Add label to namespace"
+        yq write namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
+        cat namespace.yaml
+        echo done 
+                
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Compose using kustomize"
+        kustomize build  > merged.yaml
+        echo "Content of merged.yaml"
+        cat merged.yaml
+        echo ".........................................................."
+        echo "done"
+        
+        echo ""
+        echo "---------------------------------------------------------"
+        if [ -f rpp-merged.yaml ]; then
+           rm rpp-merged.yaml
+        fi
+        echo done
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Generating RPP"
+        /generate_rpp.sh merged.yaml
+
+
+        cat rpp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rpp-merged.yaml
+        mv copy-rpp-merged.yaml rpp-merged.yaml 
+        echo "" 
+        cat rpp-merged.yaml
+        echo "---------------------------------------------------------" 
+        echo "done"  
+
+    - name: sign-artifacts
+      image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
+      imagePullPolicy: Always
+      volumeMounts:
+        - mountPath: /config/
+          name: kubeconfig-secret-volume
+      workingdir: /workspace/cicd
+      script: |
+        #!/bin/bash
+        
+        export KUBECONFIG=/config/kubeconfig
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Retriving keyring-secret ..."
+
+        kubectl get secret pipeline-keyring-secret -o json | jq -r '.data["secring.gpg"]' | base64 -d > /tmp/tmp-secring.gpg
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "importing keys"
+        gpg --import /tmp/tmp-secring.gpg         
+
+        echo ""
+        echo "Listing secret keys"
+        gpg --list-secret-keys
+
+        echo ""
+        echo "Listing keys"
+        gpg --list-keys
+
+        
+        echo "" 
+        echo "---------------------------------------------------------"
+        echo "Generating signature"
+        signer=$(params.signer-email)
+        echo signer: $signer
+
+        base='base64 -w 0'
+
+        rsfilename="merged.yaml"
+        rsfile=$(find . -name "$rsfilename")
+        echo "rsfile $rsfile"
+
+        msg=`cat $rsfile | $base`
+        echo msg
+        echo $msg
+        echo ""
+  
+        rsfilebasename=$(basename -- "$rsfile")
+        echo "rsfilebasename: $rsfilebasename"
+
+        rsigfile="rsig-$rsfilebasename"
+
+        if [ -f $rsigfile ]; then
+           rm $rsigfile
+        fi
+
+        tmprsig='{"apiVersion":"research.ibm.com/v1alpha1","kind":"ResourceSignature","metadata":{"annotations":{"messageScope":"spec","signature":""},"name":""},"spec":{"data":[{"message":"","signature":"","type":"resource"}]}}'        
+
+        echo -e $tmprsig | yq r - --prettyPrint >> $rsigfile
+
+        signfile="$rsfilebasename.sign"
+        signature=$( gpg -u $signer --detach-sign --armor --output - $rsfile | $base )               
+        echo signature: $signature
+        echo $signature >> $signfile
+        echo done
+ 
+        echo ""
+        echo "---------------------------------------------------------" 
+        echo "Setting up rsig"
+        yq w -i $rsigfile spec.data.[0].message $msg
+        yq w -i $rsigfile spec.data.[0].signature $signature
+        echo done
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Content of $rsigfile"
+        cat $rsigfile
+        echo "---------------------------------------------------------"
+             
+        echo ""
+        echo "Setting argocd wave"
+        echo "---------------------------------------------------------"
+
+        cat $rsigfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-1"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
+        mv copy-rsig-merged.yaml $rsigfile
+ 
+        rsigspec=$(cat $rsigfile | yq r - -j | jq -r '.spec' | yq r - --prettyPrint | $base)
+        echo $rsigspec > temp-rsig.yaml
+        rsigsignature=$(gpg -u $signer --detach-sign --armor --output - temp-rsig.yaml | $base )
+
+        if [ -f temp-rsig.yaml ]; then
+            rm temp-rsig.yaml 
+        fi
+
+        if [ -f $signfile ]; then
+           rm $signfile
+        fi
+
+        rsigname="rsig-$(yq r -d0 $rsfile metadata.name)"
+        yq w -i $rsigfile metadata.annotations.signature $rsigsignature
+        yq w -i $rsigfile metadata.annotations.messageScope spec
+        yq w -i $rsigfile metadata.name $rsigname
+
+        echo ""
+        echo "---------------------------------------------------------" 
+        echo "Content of ResourceSignature"
+        cat  $rsigfile
+        echo "---------------------------------------------------------" 
+        echo ""
+
+        
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Completed signing artifacts"
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Adding rpp, rsig to kustomization.yaml" 
+
+        resources=$(cat kustomization.yaml | yq r - -j | jq -r '.resources' | jq -c '.[]')
+        
+        if [[ " ${resources[*]} " == *"rsig-merged.yaml"* ]]; then
+             echo "rsig-merged.yaml is found"
+        else
+             yq w -i  kustomization.yaml 'resources.[+]' "rsig-merged.yaml"
+        fi
+
+        if [[ " ${resources[*]} " == *"rpp-merged.yaml"* ]]; then
+             echo "rpp-merged.yaml is found"
+        else
+             yq w -i  kustomization.yaml 'resources.[+]' "rpp-merged.yaml"
+        fi
+
+        echo ""
+        cat  kustomization.yaml
+        
+
+    - name: push-generated-resources
+      image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
+      workingdir: /workspace/cicd
+      script: |
+        #!/bin/bash
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Commit the changes to namespace labels"
+        pwd
+        ls
+ 
+        git config --global credential.helper store
+        git config --global user.email "gajan@jp.ibm.com"
+        git config --global user.name "gajan@jp.ibm.com"                     
+        git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    
+        git config --get remote.origin.fetch 
+
+        git remote set-url origin "https://076b53e25e86338551acb0ca582f20ddbfc4a69c@github.com/gajananan/reverse-words-cicd.git"
+
+        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+ 
+        echo ""
+        echo "---------------------------------------------------------" 
+        echo "Pushing the generated resource to pre-stage branch"
+        git add namespace.yaml
+        git add kustomization.yaml
+        git add rpp-merged.yaml
+        git add rsig-merged.yaml
+        git commit -m "Adding generated resource protection profile and resources signature" 
+        git push origin pre-stage &> /dev/null
+        echo "done"
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Pushing changes from pre-stage to stage branch"
+        git fetch origin/"$(params.pre-stage-branch)" &> /dev/null 
+        git checkout stage
+        git merge origin/"$(params.pre-stage-branch)" &> /dev/null 
+        git push origin stage
+        echo "done"
+

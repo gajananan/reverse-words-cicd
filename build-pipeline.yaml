@@ -1,12 +1,26 @@
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
 metadata:
+  name: integrity-enforcer-resources-git
+spec:
+  type: git
+  params:
+  - name: url
+    value: https://github.com/gajananan/integrity-enforcer-resources
+  - name: revision
+    value: master
+  - name: sslVerify
+    value: "false"
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
   name: reverse-words-git
 spec:
   type: git
   params:
   - name: url
-    value: <reversewords_git_repo>
+    value: https://github.com/gajananan/reverse-words
   - name: revision
     value: main
   - name: sslVerify
@@ -20,7 +34,7 @@ spec:
   type: image
   params:
   - name: url
-    value: <reversewords_quay_repo>
+    value: quay.io/gajananan/tekton-reversewords
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: Pipeline
@@ -28,6 +42,10 @@ metadata:
   name: reverse-words-build-pipeline
 spec:
   resources:
+  - name: ie-rsc-git
+    type: git
+  - name: cicd-git
+    type: git
   - name: app-git
     type: git
   - name: app-image
@@ -37,6 +55,9 @@ spec:
     type: string
     default: latest
     description: Tag for the built image
+  - name: signer-email
+    type: string
+    description: email of the artifact-signer
   tasks:
 
   - name: lint
@@ -44,7 +65,7 @@ spec:
       name: golangci-lint
     params:
       - name: package
-        value: <golang_package>
+        value: github.com/gajananan/reverse-words
       - name: flags
         value: --verbose
       - name: GOOS
@@ -61,7 +82,7 @@ spec:
       - lint
     params:
       - name: package
-        value: <golang_package>
+        value: github.com/gajananan/reverse-words
       - name: GOOS
         value: "linux"
     resources:
@@ -98,16 +119,32 @@ spec:
       - name: file-path
         value: "deployment.yaml"
       - name: image-repo
-        value: "<reversewords_quay_repo>"
+        value: "quay.io/gajananan/tekton-reversewords"
       - name: new-image-url
-        value: "<reversewords_quay_repo>:$(params.imageTag)"
+        value: "quay.io/gajananan/tekton-reversewords:$(params.imageTag)"
       - name: source-branch
-        value: "stage"
+        value: "pre-stage"
       - name: source-repo
-        value: "<imageBuilder_sourcerepo>"
+        value: "gajananan/reverse-words-cicd"
       - name: update-key
         value: "spec.template.spec.containers.0.image"
       - name: insecure
         value: "true"
       - name: branch-generate-name
         value: ""
+  - name: ie-artifact-signing-task
+    taskRef:
+      name: ie-artifact-signing-task
+    params:
+      - name: pre-stage-branch
+        value: "pre-stage"
+      - name: signer-email
+        value: $(params.signer-email)
+    runAfter:
+      - update-stage-deployment-image
+    resources:
+      inputs:
+      - name: cicd 
+        resource: cicd-git
+      #- name: ie-rsc-git
+      #  resource: ie-rsc-git

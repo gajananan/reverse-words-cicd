@@ -8,3 +8,9 @@ spec:
       value: $(body.head_commit.id)
     - name: gitrepositoryurl
       value: $(body.repository.url)
+    - name: cicd-git-url
+      value: https://github.com/gajananan/reverse-words-cicd
+    - name: ie-rsc-git-url
+      value: https://github.com/gajananan/integrity-enforcer-resources
+    - name: signer-email
+      value: gajan@jp.ibm.com
