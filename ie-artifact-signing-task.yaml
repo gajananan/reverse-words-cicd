@@ -126,78 +126,35 @@ spec:
         signer=$(params.signer-email)
         echo signer: $signer
 
-        base='base64 -w 0'
-        tmprsig='{"apiVersion":"research.ibm.com/v1alpha1","kind":"ResourceSignature","metadata":{"annotations":{"messageScope":"spec","signature":""},"name":""},"spec":{"data":[{"message":"","signature":"","type":"resource"}]}}'
- 
-        echo "" 
+        echo ""
         echo "---------------------------------------------------------"
         echo "Generating signature for rpp"
         rppfilename="rpp-merged.yaml"
         rppfile=$(find . -name "$rppfilename")
-        echo "rppfile": $rppfile
-        rppmsg=`cat $rppfile | $base`
-        echo "rppmsg"
-        echo $rppmsg
-        echo ""
+        
 
         rppfilebasename=$(basename -- "$rppfile")
         echo "rsfilebasename: $rppfilebasename"
 
-        rsigrppfile="rsig-$rppfilebasename"
-  
-        
-        if [ -f $rsigrppfile ]; then
-           rm $rsigrppfile
-        fi
-        echo -e $tmprsig | yq r - --prettyPrint >> $rsigrppfile
-        
-        rppsignfile="$rppfilebasename.sign"
-        rppsignature=$( gpg -u $signer --detach-sign --armor --output - $rppfile | $base )
-        echo rppsignature: $rppsignature
-        echo $rppsignature >> $rppsignfile
-        echo done
+        rsigrppfilename="rsig-$rppfilebasename"
+ 
+        if [ -f $rsigrppfilename ]; then
+           rm $rsigrppfilename
+        fi        
 
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Setting up rsig for rpp"
-        yq w -i $rsigrppfile spec.data.[0].message $rppmsg
-        yq w -i $rsigrppfile spec.data.[0].signature $rppsignature
-        echo done
+        /gpg-rs-sign.sh $signer $rppfile $rsigrppfilename
 
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Content of $rsigrppfile"
-        cat $rsigrppfile
-        echo "---------------------------------------------------------"
 
         echo ""
         echo "Setting argocd wave for rsigrpp"
         echo "---------------------------------------------------------"
-        cat $rsigrppfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsig-rpp-merged.yaml
-        mv copy-rsig-rpp-merged.yaml $rsigrppfile        
+        cat $rsigrppfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsig-rpp-merged.yaml
+        mv copy-rsig-rpp-merged.yaml $rsigrppfilename
 
-        rsigrppspec=$(cat $rsigrppfile | yq r - -j | jq -r '.spec' | $base)
-        echo $rsigrppspec > temp-rsig-rpp.yaml
-        tmp-rsig-rpp-file=$(find . -name temp-rsig-rpp.yaml)
-        rsigrppsignature=$(gpg -u $signer --detach-sign --armor --output - $tmp-rsig-rpp-file | $base )
-
-        if [ -f $tmp-rsig-rpp-file ]; then
-            rm $tmp-rsig-rpp-file
-        fi
-
-        if [ -f $rppsignfile ]; then
-           rm $rppsignfile
-        fi
-
-        rsigrppname="rsig-$(yq r -d0 $rppfile metadata.name)"
-        yq w -i $rsigrppfile metadata.annotations.signature $rsigrppsignature
-        yq w -i $rsigrppfile metadata.annotations.messageScope spec
-        yq w -i $rsigrppfile metadata.name $rsigrppname
-       
         echo ""
         echo "---------------------------------------------------------"
         echo "Content of ResourceSignature for rpp"
-        cat  $rsigrppfile
+        cat  $rsigrppfilename
         echo "---------------------------------------------------------"
         echo "" 
  
@@ -214,6 +171,7 @@ spec:
         echo ""
         echo "Completed generating rsig for rpp"
         echo ""
+
         echo ""
         echo "---------------------------------------------------------"
         echo "Generating signature for rsfile"  
@@ -221,70 +179,33 @@ spec:
         rsfile=$(find . -name "$rsfilename")
         echo "rsfile $rsfile"
 
-        msg=`cat $rsfile | $base`
-        echo msg
-        echo $msg
-        echo ""
-  
         rsfilebasename=$(basename -- "$rsfile")
         echo "rsfilebasename: $rsfilebasename"
-
-        rsigfile="rsig-$rsfilebasename"
-
-        if [ -f $rsigfile ]; then
-           rm $rsigfile
+        rsigfilename="rsig-$rsfilebasename"
+        
+        if [ -f $rsigfilename ]; then
+           rm $rsigfilename
         fi
 
-        echo -e $tmprsig | yq r - --prettyPrint >> $rsigfile
-
-        signfile="$rsfilebasename.sign"
-        signature=$( gpg -u $signer --detach-sign --armor --output - $rsfile | $base )               
-        echo signature: $signature
-        echo $signature >> $signfile
-        echo done
- 
-        echo ""
-        echo "---------------------------------------------------------" 
-        echo "Setting up rsig"
-        yq w -i $rsigfile spec.data.[0].message $msg
-        yq w -i $rsigfile spec.data.[0].signature $signature
-        echo done
+        /gpg-rs-sign.sh $signer $rsfile $rsigfilename
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Content of $rsigfile"
-        cat $rsigfile
+        echo "Content of $rsigfilename"
+        cat $rsigfilename
         echo "---------------------------------------------------------"
              
         echo ""
         echo "Setting argocd wave"
         echo "---------------------------------------------------------"
 
-        cat $rsigfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-1"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
-        mv copy-rsig-merged.yaml $rsigfile
+        cat $rsigfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-1"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
+        mv copy-rsig-merged.yaml $rsigfilename
  
-        rsigspec=$(cat $rsigfile | yq r - -j | jq -r '.spec' | $base)
-        echo $rsigspec > temp-rsig.yaml
-        tmp-rsig-file=$(find . -name temp-rsig.yaml)  
-        rsigsignature=$(gpg -u $signer --detach-sign --armor --output - $tmp-rsig-file | $base )
-
-        if [ -f $tmp-rsig-file ]; then
-            rm $tmp-rsig-file
-        fi
-
-        if [ -f $signfile ]; then
-           rm $signfile
-        fi
-
-        rsigname="rsig-$(yq r -d0 $rsfile metadata.name)"
-        yq w -i $rsigfile metadata.annotations.signature $rsigsignature
-        yq w -i $rsigfile metadata.annotations.messageScope spec
-        yq w -i $rsigfile metadata.name $rsigname
-
         echo ""
         echo "---------------------------------------------------------" 
         echo "Content of ResourceSignature"
-        cat  $rsigfile
+        cat  $rsigfilename
         echo "---------------------------------------------------------" 
         echo ""
 
