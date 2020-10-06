@@ -18,6 +18,9 @@ spec:
     - name: kubeconfig-secret-volume
       secret:
         secretName: ie-kubeconfig-secret
+    - name: secring-secret-volume
+      secret:
+        secretName: pipeline-keyring-secret
   steps:
     - name: clone-staging-release
       image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
@@ -90,17 +93,21 @@ spec:
       volumeMounts:
         - mountPath: /config/
           name: kubeconfig-secret-volume
+        - mountPath: /secrets/
+          name: secring-secret-volume
       workingdir: /workspace/cicd
       script: |
         #!/bin/bash
         
         export KUBECONFIG=/config/kubeconfig
-
+        echo "---------"
+        kubectl config view --minify
+        echo "---------"
         echo ""
         echo "---------------------------------------------------------"
         echo "Retriving keyring-secret ..."
-
-        kubectl get secret pipeline-keyring-secret -o json | jq -r '.data["secring.gpg"]' | base64 -d > /tmp/tmp-secring.gpg
+        
+        cat /secrets/secring.gpg | base64 -d > /tmp/tmp-secring.gpg
 
         echo ""
         echo "---------------------------------------------------------"
