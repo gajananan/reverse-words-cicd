@@ -166,7 +166,7 @@ spec:
         else
              yq w -i  kustomization.yaml 'resources.[+]' "rsig-rpp-merged.yaml"
         fi
-        ecoh done
+        echo done
 
         echo ""
         echo "Completed generating rsig for rpp"
@@ -196,8 +196,8 @@ spec:
         echo "---------------------------------------------------------"
              
         echo ""
-        echo "Setting argocd wave"
         echo "---------------------------------------------------------"
+        echo "Setting argocd wave"
 
         cat $rsigfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-1"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
         mv copy-rsig-merged.yaml $rsigfilename
