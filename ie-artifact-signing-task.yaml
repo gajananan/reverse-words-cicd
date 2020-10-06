@@ -178,10 +178,11 @@ spec:
 
         rsigrppspec=$(cat $rsigrppfile | yq r - -j | jq -r '.spec' | $base)
         echo $rsigrppspec > temp-rsig-rpp.yaml
-        rsigrppsignature=$(gpg -u $signer --detach-sign --armor --output - temp-rsig-rpp.yaml | $base )
+        tmp-rsig-rpp-file=$(find . -name temp-rsig-rpp.yaml)
+        rsigrppsignature=$(gpg -u $signer --detach-sign --armor --output - $tmp-rsig-rpp-file | $base )
 
-        if [ -f temp-rsig-rpp.yaml ]; then
-            rm temp-rsig-rpp.yaml
+        if [ -f $tmp-rsig-rpp-file ]; then
+            rm $tmp-rsig-rpp-file
         fi
 
         if [ -f $rppsignfile ]; then
@@ -264,10 +265,11 @@ spec:
  
         rsigspec=$(cat $rsigfile | yq r - -j | jq -r '.spec' | $base)
         echo $rsigspec > temp-rsig.yaml
-        rsigsignature=$(gpg -u $signer --detach-sign --armor --output - temp-rsig.yaml | $base )
+        tmp-rsig-file=$(find . -name temp-rsig.yaml)  
+        rsigsignature=$(gpg -u $signer --detach-sign --armor --output - $tmp-rsig-file | $base )
 
-        if [ -f temp-rsig.yaml ]; then
-            rm temp-rsig.yaml 
+        if [ -f $tmp-rsig-file ]; then
+            rm $tmp-rsig-file
         fi
 
         if [ -f $signfile ]; then
