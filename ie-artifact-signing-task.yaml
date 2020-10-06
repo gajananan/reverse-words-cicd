@@ -34,14 +34,12 @@ spec:
         ls
         echo done
   
-        echo ""
+        #echo ""
         echo "---------------------------------------------------------"  
         echo "Adding argocd wave annotation"        
         echo "Before"
         cat kustomization.yaml
         echo ""
-        cat kustomization.yaml | yq r - -j | jq -r '.commonAnnotations."argocd.argoproj.io/sync-wave"="0"' | yq r - --prettyPrint >>  copykustomization.yaml
-        mv copykustomization.yaml kustomization.yaml
         yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
         yq d -i kustomization.yaml 'resources.[rpp-merged.yaml]'
         echo ""
@@ -55,7 +53,7 @@ spec:
         yq write namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
         cat namespace.yaml
         echo done 
-                
+               
         echo ""
         echo "---------------------------------------------------------"
         echo "Compose using kustomize"
@@ -67,6 +65,7 @@ spec:
         
         echo ""
         echo "---------------------------------------------------------"
+        echo "removing old rpp"
         if [ -f rpp-merged.yaml ]; then
            rm rpp-merged.yaml
         fi
