@@ -14,10 +14,12 @@ spec:
         - kind: Ingress
   unprotectAttrs:
     - attrs:
+        - metadata.annotations.argocd.argoproj.io/sync-wave
+        - metadata.labels.app
         - metadata.labels.app.kubernetes.io/instance
       match:
-        kind: Service
-        name: reverse-words
+        kind: ResourceProtectionProfile
+        name: rpp-merged
     - attrs:
         - metadata.labels.app.kubernetes.io/instance
       match:
