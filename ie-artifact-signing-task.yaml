@@ -85,9 +85,6 @@ spec:
         echo "Generating RPP"
         /generate_rpp.sh merged.yaml
 
-
-        cat rpp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rpp-merged.yaml
-        mv copy-rpp-merged.yaml rpp-merged.yaml 
         echo "" 
         cat rpp-merged.yaml
         echo "---------------------------------------------------------" 
@@ -138,7 +135,7 @@ spec:
         rppfilename="rpp-merged.yaml"
         rppfile=$(find . -name "$rppfilename")
         echo "rppfile": $rppfile
-        rppmsg=`cat $rsfile | $base`
+        rppmsg=`cat $rppfile | $base`
         echo "rppmsg"
         echo $rppmsg
         echo ""
@@ -163,8 +160,8 @@ spec:
         echo ""
         echo "---------------------------------------------------------"
         echo "Setting up rsig for rpp"
-        yq w -i $rsigrppfile spec.data.[0].message $msg
-        yq w -i $rsigrppfile spec.data.[0].signature $signature
+        yq w -i $rsigrppfile spec.data.[0].message $rppmsg
+        yq w -i $rsigrppfile spec.data.[0].signature $rppsignature
         echo done
 
         echo ""
@@ -304,6 +301,9 @@ spec:
         echo content of kustomization.yaml
         cat  kustomization.yaml
         echo ""
+
+        cat rpp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rpp-merged.yaml
+        mv copy-rpp-merged.yaml rpp-merged.yaml
 
     - name: push-generated-resources
       image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
