@@ -24,6 +24,7 @@ spec:
   steps:
     - name: clone-staging-release
       image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
+      imagePullPolicy: Always
       workingdir: /workspace/cicd
       script: |
         #!/bin/bash
