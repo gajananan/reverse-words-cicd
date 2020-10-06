@@ -192,7 +192,8 @@ spec:
         yq w -i $rsigrppfile metadata.annotations.signature $rsigrppsignature
         yq w -i $rsigrppfile metadata.annotations.messageScope spec
         yq w -i $rsigrppfile metadata.name $rsigrppname
-         echo ""
+       
+        echo ""
         echo "---------------------------------------------------------"
         echo "Content of ResourceSignature for rpp"
         cat  $rsigrppfile
@@ -207,6 +208,7 @@ spec:
         else
              yq w -i  kustomization.yaml 'resources.[+]' "rsig-rpp-merged.yaml"
         fi
+        ecoh done
 
         echo ""
         echo "Completed generating rsig for rpp"
