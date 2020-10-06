@@ -176,7 +176,7 @@ spec:
         cat $rsigrppfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsig-rpp-merged.yaml
         mv copy-rsig-rpp-merged.yaml $rsigrppfile        
 
-        rsigrppspec=$(cat $rsigrppfile | yq r - -j | jq -r '.spec' | yq r - --prettyPrint | $base)
+        rsigrppspec=$(cat $rsigrppfile | yq r - -j | jq -r '.spec' | $base)
         echo $rsigrppspec > temp-rsig-rpp.yaml
         rsigrppsignature=$(gpg -u $signer --detach-sign --armor --output - temp-rsig-rpp.yaml | $base )
 
@@ -262,7 +262,7 @@ spec:
         cat $rsigfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-1"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
         mv copy-rsig-merged.yaml $rsigfile
  
-        rsigspec=$(cat $rsigfile | yq r - -j | jq -r '.spec' | yq r - --prettyPrint | $base)
+        rsigspec=$(cat $rsigfile | yq r - -j | jq -r '.spec' | $base)
         echo $rsigspec > temp-rsig.yaml
         rsigsignature=$(gpg -u $signer --detach-sign --armor --output - temp-rsig.yaml | $base )
 
