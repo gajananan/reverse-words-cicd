@@ -1,5 +1,7 @@
 bases:
   - github.com/gajananan/reverse-words-cicd?ref=config
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "0"
 commonLabels:
   app: reversewords-stage
 namespace: reverse-words-stage
@@ -11,5 +13,3 @@ resources:
   - sealed-registry-secret.yaml
   - rsig-merged.yaml
   - rpp-merged.yaml
-commonAnnotations:
-  argocd.argoproj.io/sync-wave: "0"
