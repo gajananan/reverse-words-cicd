@@ -1,7 +1,5 @@
 bases:
   - github.com/gajananan/reverse-words-cicd?ref=config
-commonAnnotations:
-  argocd.argoproj.io/sync-wave: "0"
 commonLabels:
   app: reversewords-stage
 namespace: reverse-words-stage
