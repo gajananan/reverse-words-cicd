@@ -53,7 +53,7 @@ spec:
         echo ""
         echo "---------------------------------------------------------"
         echo "Add label to namespace"
-        yq write namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
+        yq w -i namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
         cat namespace.yaml
         echo done 
                
