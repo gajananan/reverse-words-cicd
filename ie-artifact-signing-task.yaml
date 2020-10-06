@@ -44,6 +44,7 @@ spec:
         echo "Before"
         cat kustomization.yaml
         echo ""
+        yq d -i kustomization.yaml 'resources.[rsig-rpp-merged.yaml]'
         yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
         yq d -i kustomization.yaml 'resources.[rpp-merged.yaml]'
         echo ""
@@ -55,6 +56,10 @@ spec:
         echo "---------------------------------------------------------"
         echo "Add label to namespace"
         yq w -i namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
+        echo ""
+        echo "Adding argocd wave"
+        cat namespace.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-4"' | yq r - --prettyPrint >> copy-namespace.yaml
+        cp copy-namespace.yaml namespace.yaml
         cat namespace.yaml
         echo done 
                
@@ -121,14 +126,97 @@ spec:
         gpg --list-keys
 
         
-        echo "" 
-        echo "---------------------------------------------------------"
-        echo "Generating signature"
         signer=$(params.signer-email)
         echo signer: $signer
 
         base='base64 -w 0'
+        tmprsig='{"apiVersion":"research.ibm.com/v1alpha1","kind":"ResourceSignature","metadata":{"annotations":{"messageScope":"spec","signature":""},"name":""},"spec":{"data":[{"message":"","signature":"","type":"resource"}]}}'
+ 
+        echo "" 
+        echo "---------------------------------------------------------"
+        echo "Generating signature for rpp"
+        rppfilename="rpp-merged.yaml"
+        rppfile=$(find . -name "$rppfilename")
+        echo "rppfile $rppfile
+        rppmsg=`cat $rsfile | $base`
+        echo "rppmsg"
+        echo $rppmsg
+        echo ""
 
+        rppfilebasename=$(basename -- "$rppfile")
+        echo "rsfilebasename: $rppfilebasename"
+
+        rsigrppfile="rsig-$rppfilebasename"
+  
+        
+        if [ -f $rsigrppfile ]; then
+           rm $rsigrppfile
+        fi
+        echo -e $tmprsig | yq r - --prettyPrint >> $rsigrppfile
+        
+        rppsignfile="$rppfilebasename.sign"
+        rppsignature=$( gpg -u $signer --detach-sign --armor --output - $rppfile | $base )
+        echo rppsignature: $rppsignature
+        echo $rppsignature >> $rppsignfile
+        echo done
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Setting up rsig for rpp"
+        yq w -i $rsigrppfile spec.data.[0].message $msg
+        yq w -i $rsigrppfile spec.data.[0].signature $signature
+        echo done
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Content of $rsigrppfile"
+        cat $rsigrppfile
+        echo "---------------------------------------------------------"
+
+        echo ""
+        echo "Setting argocd wave for rsigrpp"
+        echo "---------------------------------------------------------"
+        cat $rsigrppfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsig-rpp-merged.yaml
+        mv copy-rsig-rpp-merged.yaml $rsigrppfile        
+
+        rsigrppspec=$(cat $rsigrppfile | yq r - -j | jq -r '.spec' | yq r - --prettyPrint | $base)
+        echo $rsigrppspec > temp-rsig-rpp.yaml
+        rsigrppsignature=$(gpg -u $signer --detach-sign --armor --output - temp-rsig-rpp.yaml | $base )
+
+        if [ -f temp-rsig-rpp.yaml ]; then
+            rm temp-rsig-rpp.yaml
+        fi
+
+        if [ -f $rppsignfile ]; then
+           rm $rppsignfile
+        fi
+
+        rsigrppname="rsig-$(yq r -d0 $rppfile metadata.name)"
+        yq w -i $rsigrppfile metadata.annotations.signature $rsigrppsignature
+        yq w -i $rsigrppfile metadata.annotations.messageScope spec
+        yq w -i $rsigrppfile metadata.name $rsigrppname
+         echo ""
+        echo "---------------------------------------------------------"
+        echo "Content of ResourceSignature for rpp"
+        cat  $rsigrppfile
+        echo "---------------------------------------------------------"
+        echo "" 
+ 
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Adding rsig-rpp to kustomization.yaml"
+        if [[ " ${resources[*]} " == *"rsig-rpp-merged.yaml"* ]]; then
+             echo "rsig-rpp-merged.yaml is found"
+        else
+             yq w -i  kustomization.yaml 'resources.[+]' "rsig-rpp-merged.yaml"
+        fi
+
+        echo ""
+        echo "Completed generating rsig for rpp"
+        echo ""
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Generating signature for rsfile"  
         rsfilename="merged.yaml"
         rsfile=$(find . -name "$rsfilename")
         echo "rsfile $rsfile"
@@ -146,8 +234,6 @@ spec:
         if [ -f $rsigfile ]; then
            rm $rsigfile
         fi
-
-        tmprsig='{"apiVersion":"research.ibm.com/v1alpha1","kind":"ResourceSignature","metadata":{"annotations":{"messageScope":"spec","signature":""},"name":""},"spec":{"data":[{"message":"","signature":"","type":"resource"}]}}'        
 
         echo -e $tmprsig | yq r - --prettyPrint >> $rsigfile
 
