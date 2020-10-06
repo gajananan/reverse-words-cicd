@@ -15,4 +15,4 @@ spec:
         image: quay.io/gajananan/tekton-reversewords:4a742da069a9967644f3fc06bfb6a371553f69cb
         name: reverse-words
       imagePullSecrets:
-      - name: registry-secret
+        - name: registry-secret
