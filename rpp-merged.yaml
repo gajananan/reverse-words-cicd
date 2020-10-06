@@ -6,6 +6,27 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
+  ignoreAttrs:
+    - attrs:
+        - metadata.labels."app.kubernetes.io/instance"
+      match:
+        kind: Service
+        name: reverse-words
+    - attrs:
+        - metadata.labels."app.kubernetes.io/instance"
+      match:
+        kind: Deployment
+        name: reverse-words
+    - attrs:
+        - metadata.labels."app.kubernetes.io/instance"
+      match:
+        kind: SealedSecret
+        name: reverse-words
+    - attrs:
+        - metadata.labels."app.kubernetes.io/instance"
+      match:
+        kind: Ingress
+        name: reverse-words
   rules:
     - match:
         - kind: Service
