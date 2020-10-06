@@ -99,15 +99,12 @@ spec:
       script: |
         #!/bin/bash
         
-        export KUBECONFIG=/config/kubeconfig
-        echo "---------"
-        kubectl config view --minify
-        echo "---------"
+        
         echo ""
         echo "---------------------------------------------------------"
         echo "Retriving keyring-secret ..."
         
-        cat /secrets/secring.gpg | base64 -d > /tmp/tmp-secring.gpg
+        cat /secrets/secring.gpg > /tmp/tmp-secring.gpg
 
         echo ""
         echo "---------------------------------------------------------"
