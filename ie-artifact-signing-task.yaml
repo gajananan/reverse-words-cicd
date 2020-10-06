@@ -137,7 +137,7 @@ spec:
         echo "Generating signature for rpp"
         rppfilename="rpp-merged.yaml"
         rppfile=$(find . -name "$rppfilename")
-        echo "rppfile $rppfile
+        echo "rppfile": $rppfile
         rppmsg=`cat $rsfile | $base`
         echo "rppmsg"
         echo $rppmsg
@@ -296,23 +296,14 @@ spec:
         echo "---------------------------------------------------------"
         echo "Adding rpp, rsig to kustomization.yaml" 
 
-        resources=$(cat kustomization.yaml | yq r - -j | jq -r '.resources' | jq -c '.[]')
-        
-        if [[ " ${resources[*]} " == *"rsig-merged.yaml"* ]]; then
-             echo "rsig-merged.yaml is found"
-        else
-             yq w -i  kustomization.yaml 'resources.[+]' "rsig-merged.yaml"
-        fi
-
-        if [[ " ${resources[*]} " == *"rpp-merged.yaml"* ]]; then
-             echo "rpp-merged.yaml is found"
-        else
-             yq w -i  kustomization.yaml 'resources.[+]' "rpp-merged.yaml"
-        fi
+        yq w -i  kustomization.yaml 'resources.[+]' "rsig-merged.yaml"
+        yq w -i  kustomization.yaml 'resources.[+]' "rpp-merged.yaml"
 
         echo ""
+        echo "---------------------------------------------------------"
+        echo content of kustomization.yaml
         cat  kustomization.yaml
-        
+        echo ""
 
     - name: push-generated-resources
       image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
@@ -341,6 +332,7 @@ spec:
         echo "Pushing the generated resource to pre-stage branch"
         git add namespace.yaml
         git add kustomization.yaml
+        git add rsig-rpp-merged.yaml
         git add rpp-merged.yaml
         git add rsig-merged.yaml
         git commit -m "Adding generated resource protection profile and resources signature" 
