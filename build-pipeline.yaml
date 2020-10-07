@@ -123,8 +123,10 @@ spec:
     taskRef:
       name: ie-artifact-signing-task
     params:
-      - name: pre-stage-branch
+      - name: source-branch
         value: "pre-stage"
+      - name: dest-branch
+        value: "stage"    
       - name: signer-email
         value: $(params.signer-email)
     runAfter:

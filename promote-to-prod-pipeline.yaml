@@ -92,9 +92,11 @@ spec:
 
   - name: ie-artifact-signing-task
     taskRef:
-      name: prod-ie-artifact-signing-task
+      name: ie-artifact-signing-task
     params:
-      - name: prod-branch
+      - name: source-branch
+        value: "pre-prod"
+      - name: dest-branch
         value: "prod"
       - name: signer-email
         value: $(params.signer-email)
