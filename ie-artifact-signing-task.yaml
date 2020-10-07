@@ -38,9 +38,8 @@ spec:
         ls
         echo done
   
-        #echo ""
         echo "---------------------------------------------------------"  
-        echo "Adding argocd wave annotation"        
+        echo "Removing IE resources from  kustomization.yaml "        
         echo "Before"
         cat kustomization.yaml
         echo ""
@@ -48,6 +47,7 @@ spec:
         yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
         yq d -i kustomization.yaml 'resources.[rpp-merged.yaml]'
         echo ""
+        echo "---------------------------------------------------------"        
         echo "After"
         cat kustomization.yaml
         echo done
@@ -57,7 +57,7 @@ spec:
         echo "Add label to namespace"
         yq w -i namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
         echo ""
-        echo "Adding argocd wave"
+        echo "Adding argocd wave annotation"
         cat namespace.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-4"' | yq r - --prettyPrint >> copy-namespace.yaml
         cp copy-namespace.yaml namespace.yaml
         cat namespace.yaml
@@ -82,8 +82,8 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Generating RPP"
-        /generate_rpp.sh merged.yaml
+        echo "Generating RPP <script> <input_file> <output_file>"
+        /generate_rpp.sh merged.yaml rpp-merged.yaml
 
         echo "" 
         cat rpp-merged.yaml
