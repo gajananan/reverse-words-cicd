@@ -12,7 +12,7 @@ spec:
         - name: RELEASE
           value: Stage Release
         - $patch: replace
-        image: quay.io/gajananan/tekton-reversewords:8483da5f109f0b419e55ec471c700faa3b5a429d
+        image: quay.io/gajananan/tekton-reversewords:3f5966a64b324fc6c73a2704495d954c8cd18daa
         name: reverse-words
       imagePullSecrets:
       - name: registry-secret
