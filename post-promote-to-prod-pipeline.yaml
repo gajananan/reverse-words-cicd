@@ -1,0 +1,126 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: reverse-words-cicd-git-2
+spec:
+  type: git
+  params:
+  - name: url
+    value: https://github.com/gajananan/reverse-words-cicd
+  - name: revision
+    value: pre-prod-2
+  - name: sslVerify
+    value: "false"
+  secrets:
+    - fieldName: authToken
+      secretName: image-updater-secret
+      secretKey: token
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: reverse-words-promote-pipeline-2
+spec:
+  resources:
+  - name: app-git
+    type: git
+  params:
+  - name: pathToDeploymentFile
+    type: string
+    description: Path to the deployment file for stage
+  - name: stageBranch
+    type: string
+    default: stage
+    description: Branch where the deployment file for stage is located
+  - name: stageAppUrl
+    type: string
+    description: URL where the staging app is published
+  - name: signer-email
+    type: string
+    description: email of the artifact-signer
+  tasks:
+
+  - name: access-stage-build
+    taskRef:
+      name: curl
+    params:
+      - name: url
+        value: "$(params.stageAppUrl)"
+      - name: options
+        value:
+          - "-s"
+
+  - name: get-stage-release
+    taskRef:
+      name: get-stage-release
+    params:
+      - name: stage-deployment-file
+        value: "$(params.pathToDeploymentFile)"
+      - name: stage-branch
+        value: "$(params.stageBranch)"
+    runAfter:
+      - access-stage-build
+    resources:
+      inputs:
+      - name: cicd
+        resource: app-git
+
+  - name: promote-stage-image
+    taskRef:
+      name: image-updater
+    runAfter:
+      - get-stage-release
+    params:
+      - name: driver
+        value: "github"
+      - name: file-path
+        value: "deployment.yaml"
+      - name: image-repo
+        value: "quay.io/gajananan/tekton-reversewords"
+      - name: new-image-url
+        value: "quay.io/gajananan/tekton-reversewords:$(tasks.get-stage-release.results.release-tag)"
+      - name: source-branch
+        value: "pre-prod-2"
+      - name: source-repo
+        value: "gajananan/reverse-words-cicd"
+      - name: update-key
+        value: "spec.template.spec.containers.0.image"
+      - name: insecure
+        value: "true"
+      - name: branch-generate-name
+        value: ""
+
+  - name: ie-artifact-signing-task
+    taskRef:
+      name: ie-artifact-signing-task
+    params:
+      - name: source-branch
+        value: "pre-prod-2"
+      - name: dest-branch
+        value: "prod-2"
+      - name: signer-email
+        value: $(params.signer-email)
+    runAfter:
+      - promote-stage-image
+    resources:
+      inputs:
+      - name: cicd
+        resource: app-git
+
+
+#  - name: promote-stage-source
+#    taskRef: 
+#       name: git-pull-and-push
+#    runAfter:
+#       -  get-stage-release 
+#    resources:
+#      inputs:
+#      - name: cicd
+#        resource: app-git
+#    params:
+#      - name: git-repo-url
+#        value: github.com/gajananan/reverse-words-cicd.git
+#      - name: source-branch
+#        value: stage
+#      - name: dest-branch
+#        value: prod
