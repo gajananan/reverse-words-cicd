@@ -83,3 +83,19 @@ spec:
       - name: branch-generate-name
         value: "image-promotion-"
 
+  - name: promote-stage-source
+    taskRef: 
+       name: git-pull-and-push
+    runAfter:
+       - promote-stage-image
+    resources:
+      inputs:
+      - name: cicd
+        resource: app-git
+    params:
+      - name: git-repo-url
+        value: github.com/gajananan/reverse-words-cicd.git
+      - name: source-branch
+        value: stage
+      - name: dest-branch
+        value: prod

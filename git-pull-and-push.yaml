@@ -1,0 +1,59 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: git-pull-and-push
+spec:
+  inputs:
+    resources:
+    - name: cicd
+      type: git
+    params:
+    - name: source-branch
+      type: string
+      description: Source branch from source git repository
+    - name: dest-branch
+      type: string
+      description: Dest branch from source git repository
+    - name: git-repo-url
+      type: string
+      description:  Git repo URL (e.g. github.com/gajananan/reverse-words-cicd.git)
+  steps:
+      - name: git-pull-from-source-and-push-to-dest
+        image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
+        workingdir: /workspace/cicd
+        script: |
+          #!/bin/bash
+ 
+          echo ""
+          echo "---------------------------------------------------------"
+          echo "Configure Git settings for pushing sources"
+
+          git config --get remote.origin.url
+
+          git config --global credential.helper store
+          git config --global user.email "gajan@jp.ibm.com"
+          git config --global user.name "gajan@jp.ibm.com"
+          git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          git config --get remote.origin.fetch
+
+          git remote set-url origin "https://$AUTH_TOKEN@$(params.git-repo-url)"
+
+          git config --get remote.origin.url
+          echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+
+          echo ""
+          echo "---------------------------------------------------------"
+          echo "Pushing changes from source branch to dest branch"
+          git fetch origin/"$(params.source-branch)" &> /dev/null
+          git checkout "$(params.dest-branch)"
+          git merge origin/"$(params.source-branch)" &> /dev/null
+          git push origin  "$(params.dest-branch)" &> /dev/null
+          echo "done"
+
+        env:
+          - name: AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: image-updater-secret
+                key: token
