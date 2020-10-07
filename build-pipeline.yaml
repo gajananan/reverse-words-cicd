@@ -1,16 +1,3 @@
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: integrity-enforcer-resources-git
-spec:
-  type: git
-  params:
-  - name: url
-    value: https://github.com/gajananan/integrity-enforcer-resources
-  - name: revision
-    value: master
-  - name: sslVerify
-    value: "false"
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource

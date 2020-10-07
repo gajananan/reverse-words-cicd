@@ -6,5 +6,6 @@ secrets:
   - name: quay-user-pass
   - name: ie-kubeconfig-secret
   - name: pipeline-keyring-secret
+  - name: image-updater-secret
 imagePullSecrets:
   - name: registry-secret

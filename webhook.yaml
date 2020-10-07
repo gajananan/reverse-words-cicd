@@ -42,6 +42,10 @@ spec:
           value: stage
         - name: sslVerify
           value: "false"
+        secrets:
+          - fieldName: authToken
+            secretName: image-updater-secret
+            secretKey: token
     - apiVersion: tekton.dev/v1alpha1
       kind: PipelineResource
       metadata:
