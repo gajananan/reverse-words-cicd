@@ -29,8 +29,6 @@ metadata:
   name: reverse-words-build-pipeline
 spec:
   resources:
-  - name: ie-rsc-git
-    type: git
   - name: cicd-git
     type: git
   - name: app-git
@@ -135,5 +133,3 @@ spec:
       inputs:
       - name: cicd 
         resource: cicd-git
-      #- name: ie-rsc-git
-      #  resource: ie-rsc-git

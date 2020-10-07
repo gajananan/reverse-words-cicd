@@ -11,8 +11,6 @@ spec:
       description: The git repository url
     - name: cicd-git-url
       description: The cicd git repository url 
-    - name: ie-rsc-git-url
-      description: The ie rsc git repository url
     - name: signer-email
       description: email of the artifacts signer
   resourcetemplates:
@@ -39,26 +37,13 @@ spec:
         - name: url
           value: $(params.cicd-git-url)
         - name: revision
-          value: stage
+          value: pre-stage
         - name: sslVerify
           value: "false"
         secrets:
           - fieldName: authToken
             secretName: image-updater-secret
             secretKey: token
-    - apiVersion: tekton.dev/v1alpha1
-      kind: PipelineResource
-      metadata:
-        name: integrity-enforcer-resources-git-$(uid)
-      spec:
-        type: git
-        params:
-        - name: url
-          value: $(params.ie-rsc-git-url)
-        - name: revision
-          value: master
-        - name: sslVerify
-          value: "false"
     - apiVersion: tekton.dev/v1alpha1
       kind: PipelineRun
       metadata:
@@ -83,9 +68,6 @@ spec:
           - name: cicd-git
             resourceRef:
               name: reverse-words-cicd-git-$(uid)
-          - name: ie-rsc-git
-            resourceRef:
-              name: integrity-enforcer-resources-git-$(uid)
           - name: app-image
             resourceRef:
               name: reverse-words-image

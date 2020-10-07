@@ -39,8 +39,9 @@ spec:
         echo ""
         echo "---------------------------------------------------------"
         echo "Clone cicd pre-stage branch"  
-
-        git pull origin $(git rev-parse --abbrev-ref HEAD)
+        git fetch
+        git checkout $(params.source-branch)
+        git pull --allow-unrelated-histories
         echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
         pwd
         ls
@@ -288,14 +289,14 @@ spec:
         git add rpp-merged.yaml
         git add rsig-merged.yaml
         git commit -m "Adding generated resource protection profile and resources signature" 
-        git push origin "$(params.source-branch)" &> /dev/null
+        git push origin $(git rev-parse --abbrev-ref HEAD) &> /dev/null
         echo "done"
 
  
         echo ""
         echo "---------------------------------------------------------"
         echo "Pushing changes from "$(params.source-branch)" to "$(params.dest-branch)" branch"
-        git checkout -d origin "$(params.dest-branch)"
+        git push -d origin "$(params.dest-branch)"
         echo ""
         git checkout -b "$(params.dest-branch)"
         echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"

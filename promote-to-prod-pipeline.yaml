@@ -8,7 +8,7 @@ spec:
   - name: url
     value: https://github.com/gajananan/reverse-words-cicd
   - name: revision
-    value: config
+    value: pre-prod
   - name: sslVerify
     value: "false"
   secrets:
@@ -80,7 +80,7 @@ spec:
       - name: new-image-url
         value: "quay.io/gajananan/tekton-reversewords:$(tasks.get-stage-release.results.release-tag)"
       - name: source-branch
-        value: "prod"
+        value: "pre-prod"
       - name: source-repo
         value: "gajananan/reverse-words-cicd"
       - name: update-key
