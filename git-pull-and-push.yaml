@@ -40,15 +40,27 @@ spec:
           git remote set-url origin "https://$AUTH_TOKEN@$(params.git-repo-url)"
 
           git config --get remote.origin.url
+
           echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+          git fetch
 
           echo ""
           echo "---------------------------------------------------------"
           echo "Pushing changes from source branch to dest branch"
           git fetch origin/"$(params.source-branch)" &> /dev/null
+          git checkout "$(params.source-branch)"
+          echo "what is in stage branch"
+          echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+          ls -la
           git checkout "$(params.dest-branch)"
           git merge origin/"$(params.source-branch)" &> /dev/null
-          git push origin  "$(params.dest-branch)" &> /dev/null
+          echo "What is in prod branch"
+          git status
+#          git add .
+#          git commit -n "Changes promoted from $(params.source-branch) to $(params.dest-branch)"
+          echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+          ls
+          git push origin origin/"$(params.dest-branch)" &> /dev/null
           echo "done"
 
         env:

@@ -58,36 +58,37 @@ spec:
       - name: cicd
         resource: app-git
 
-  - name: promote-stage-image
-    taskRef:
-      name: image-updater
-    runAfter:
-      - get-stage-release
-    params:
-      - name: driver
-        value: "github"
-      - name: file-path
-        value: "deployment.yaml"
-      - name: image-repo
-        value: "quay.io/gajananan/tekton-reversewords"
-      - name: new-image-url
-        value: "quay.io/gajananan/tekton-reversewords:$(tasks.get-stage-release.results.release-tag)"
-      - name: source-branch
-        value: "prod"
-      - name: source-repo
-        value: "gajananan/reverse-words-cicd"
-      - name: update-key
-        value: "spec.template.spec.containers.0.image"
-      - name: insecure
-        value: "true"
-      - name: branch-generate-name
-        value: "image-promotion-"
+#  - name: promote-stage-image
+#    taskRef:
+#      name: image-updater
+#    runAfter:
+#      - get-stage-release
+#    params:
+#      - name: driver
+#        value: "github"
+#      - name: file-path
+#        value: "deployment.yaml"
+#      - name: image-repo
+#        value: "quay.io/gajananan/tekton-reversewords"
+#      - name: new-image-url
+#        value: "quay.io/gajananan/tekton-reversewords:$(tasks.get-stage-release.results.release-tag)"
+#      - name: source-branch
+#        value: "prod"
+#      - name: source-repo
+#        value: "gajananan/reverse-words-cicd"
+#      - name: update-key
+#        value: "spec.template.spec.containers.0.image"
+#      - name: insecure
+#        value: "true"
+#      - name: branch-generate-name
+#        value: "image-promotion-"
 
   - name: promote-stage-source
     taskRef: 
        name: git-pull-and-push
     runAfter:
-       - promote-stage-image
+       -  get-stage-release 
+        # promote-stage-image
     resources:
       inputs:
       - name: cicd
