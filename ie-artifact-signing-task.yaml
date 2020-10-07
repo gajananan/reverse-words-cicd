@@ -236,6 +236,7 @@ spec:
       script: |
         #!/bin/bash
 
+
         echo ""
         echo "---------------------------------------------------------"
         echo "Commit the changes to namespace labels"
@@ -248,7 +249,7 @@ spec:
         git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    
         git config --get remote.origin.fetch 
 
-        git remote set-url origin "https://bd5db0f84d8dcec58d72716cd489f36d53cc54dd@github.com/gajananan/reverse-words-cicd.git"
+        git remote set-url origin "https://$AUTH_TOKEN@github.com/gajananan/reverse-words-cicd.git"
 
         echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
  
@@ -273,3 +274,9 @@ spec:
         git push origin stage
         echo "done"
 
+      env:
+        - name: AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: image-updater-secret
+              key: token
