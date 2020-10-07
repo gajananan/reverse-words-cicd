@@ -53,7 +53,12 @@ spec:
           echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
           ls -la
           git checkout "$(params.dest-branch)"
+
           git merge origin/"$(params.source-branch)" &> /dev/null
+          yq w -i namespace.yaml 'metadata.name' 'reverse-words-production'
+          git add namespace.yaml
+          git commit -m "Changed namespace"
+
           echo "What is in prod branch"
           git status
           echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
