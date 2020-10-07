@@ -5,4 +5,4 @@ metadata:
     argocd.argoproj.io/sync-wave: "-4"
   labels:
     integrity-enforced: "true"
-  name: reverse-words-stage
+  name: reverse-words-production
