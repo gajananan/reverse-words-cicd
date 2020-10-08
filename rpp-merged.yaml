@@ -8,29 +8,10 @@ spec:
   rules:
     - match:
         - kind: Service
+          name: reverse-words
         - kind: Deployment
+          name: reverse-words
         - kind: SealedSecret
+          name: registry-secret
         - kind: Ingress
-  unprotectAttrs:
-    - attrs:
-        - metadata.annotations.argocd.argoproj.io/sync-wave
-        - metadata.labels.app
-        - metadata.labels.app.kubernetes.io/instance
-      match:
-        kind: ResourceProtectionProfile
-        name: rpp-merged
-    - attrs:
-        - metadata.labels.app.kubernetes.io/instance
-      match:
-        kind: Deployment
-        name: reverse-words
-    - attrs:
-        - metadata.labels.app.kubernetes.io/instance
-      match:
-        kind: SealedSecret
-        name: registry-secret
-    - attrs:
-        - metadata.labels.app.kubernetes.io/instance
-      match:
-        kind: Ingress
-        name: reverse-words
+          name: reverse-words
