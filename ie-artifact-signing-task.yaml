@@ -17,6 +17,11 @@ spec:
     - name: signer-email
       type: string 
       description:  email of the artifacts signer 
+    - name: git-repo-url
+      type: string
+      description:  git repo url "e.g. https://github.com/gajananan/logdna"
+    - name: ignore-attrs
+      type: string 
   volumes:
     - name: secring-secret-volume
       secret:
@@ -91,8 +96,9 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Generate RPP <script> <inputfile>"
-        /generate_rpp.sh merged.yaml
+        echo "Generate RPP <script> <inputfile> <IGNORE_ATTR>"
+        echo ignore-attrs: $(params.ignore-attrs)
+        /generate_rpp.sh merged.yaml $(params.ignore-attrs)
 
         echo ""
         echo "---------------------------------------------------------"
@@ -269,7 +275,10 @@ spec:
         git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    
         git config --get remote.origin.fetch 
 
-        git remote set-url origin "https://$AUTH_TOKEN@github.com/gajananan/reverse-words-cicd.git"
+        repourl=$(params.git-repo-url) 
+        echo repourl: $repourl
+        repourlwithtoken=$(echo $repourl | sed "s|github|$AUTH_TOKEN@github|g").git
+        git remote set-url origin  "$repourlwithtoken"
         git fetch
         echo ""
         echo "---------------------------------------------------------"

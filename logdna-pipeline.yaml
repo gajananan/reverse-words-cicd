@@ -1,0 +1,36 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: ie-ci-pipeline
+spec:
+  resources:
+  - name: cicd-git
+    type: git
+  params:
+  - name: signer-email
+    type: string
+    description: email of the artifact-signer
+  - name: cicd-git-url
+    type: string
+    description:   git repo url "e.g. github.com/gajananan/reverse-words-cicd.git"
+  tasks:
+
+  - name: ie-artifact-signing-task
+    taskRef:
+      name: ie-artifact-signing-task
+    params:
+      - name: source-branch
+        value: "main"
+      - name: dest-branch
+        value: "stage"    
+      - name: signer-email
+        value: $(params.signer-email)
+      - name: git-repo-url
+        value: $(params.cicd-git-url)
+      - name: ignore-attrs
+        value: "true"
+    resources:
+      inputs:
+      - name: cicd
+        resource: cicd-git

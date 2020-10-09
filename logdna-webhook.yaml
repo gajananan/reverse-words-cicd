@@ -1,7 +1,7 @@
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerTemplate
 metadata:
-  name: reverseword-build-triggertemplate
+  name: ie-triggertemplate
 spec:
   params:
     - name: gitrevision
@@ -17,27 +17,14 @@ spec:
     - apiVersion: tekton.dev/v1alpha1
       kind: PipelineResource
       metadata:
-        name: reversewords-git-$(uid)
-      spec:
-        type: git
-        params:
-        - name: revision
-          value: $(params.gitrevision)
-        - name: url
-          value: $(params.gitrepositoryurl)
-        - name: sslVerify
-          value: "false"
-    - apiVersion: tekton.dev/v1alpha1
-      kind: PipelineResource
-      metadata:
-        name: reverse-words-cicd-git-$(uid)
+        name: logdna-cicd-git-$(uid)
       spec:
         type: git
         params:
         - name: url
           value: $(params.cicd-git-url)
         - name: revision
-          value: pre-stage
+          value: main
         - name: sslVerify
           value: "false"
         secrets:
@@ -47,41 +34,31 @@ spec:
     - apiVersion: tekton.dev/v1alpha1
       kind: PipelineRun
       metadata:
-        name: reversewords-build-pipeline-run-$(uid)
+        name: ie-ci-pipeline-run-$(uid)
       spec:
         pipelineRef:
-          name: reverse-words-build-pipeline
+          name: ie-ci-pipeline
         serviceAccountNames:
-          - taskName: build-and-push
-            serviceAccountName: reversewords-pipeline
           - taskName: ie-artifact-signing-task
-            serviceAccountName: reversewords-pipeline
+            serviceAccountName: ie-pipeline
         params:
-          - name: imageTag
-            value: $(params.gitrevision)
           - name: signer-email
             value: $(params.signer-email)
           - name: cicd-git-url
             value: $(params.cicd-git-url)
         resources:
-          - name: app-git
-            resourceRef:
-              name: reversewords-git-$(uid)
           - name: cicd-git
             resourceRef:
-              name: reverse-words-cicd-git-$(uid)
-          - name: app-image
-            resourceRef:
-              name: reverse-words-image
+              name: logdna-cicd-git-$(uid)
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: EventListener
 metadata:
-  name: reversewords-webhook
+  name: ie-webhook
 spec:
-  serviceAccountName: reversewords-pipeline
+  serviceAccountName: ie-pipeline
   triggers:
-    - name: git-reversewords-trigger
+    - name: git-ie-trigger
       interceptors:
         - github:
             secretRef:
@@ -90,6 +67,6 @@ spec:
             eventTypes:
               - push
       bindings:
-        - name: github-triggerbinding
+        - name: ie-github-triggerbinding
       template:
-        name: reverseword-build-triggertemplate
+        name: ie-triggertemplate

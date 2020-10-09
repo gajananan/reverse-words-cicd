@@ -43,6 +43,9 @@ spec:
   - name: signer-email
     type: string
     description: email of the artifact-signer
+  - name: cicd-git-url
+    type: string
+    description:   git repo url "e.g. github.com/gajananan/reverse-words-cicd.git"
   tasks:
 
   - name: lint
@@ -127,6 +130,10 @@ spec:
         value: "stage"    
       - name: signer-email
         value: $(params.signer-email)
+      - name: git-repo-url 
+        value: $(params.cicd-git-url)
+      - name: ignore-attrs
+        value: "false"
     runAfter:
       - update-stage-deployment-image
     resources:
