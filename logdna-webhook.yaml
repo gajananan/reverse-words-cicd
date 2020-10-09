@@ -11,6 +11,10 @@ spec:
       description: The git repository url
     - name: cicd-git-url
       description: The cicd git repository url 
+    - name: cicd-git-user-email
+      description:  user email for the cicd repository
+    - name: cicd-git-user-name
+      description:  user name for the cicd repository
     - name: signer-email
       description: email of the artifacts signer
   resourcetemplates:
@@ -46,6 +50,10 @@ spec:
             value: $(params.signer-email)
           - name: cicd-git-url
             value: $(params.cicd-git-url)
+          - name: cicd-git-user-email
+            value: $(params.cicd-git-user-email)
+          - name: cicd-git-user-name
+            value: $(params.cicd-git-user-name)
         resources:
           - name: cicd-git
             resourceRef:

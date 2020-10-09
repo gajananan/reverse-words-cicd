@@ -10,5 +10,9 @@ spec:
       value: $(body.repository.url)
     - name: cicd-git-url
       value: https://github.com/gajananan/reverse-words-cicd
+    - name: cicd-git-user-email
+      value: gajan@jp.ibm.com
+    - name: cicd-git-user-name
+      value: gajan@jp.ibm.com
     - name: signer-email
       value: gajan@jp.ibm.com

@@ -20,6 +20,10 @@ spec:
     - name: git-repo-url
       type: string
       description:  git repo url "e.g. https://github.com/gajananan/logdna"
+    - name: git-repo-user-email
+      type: string
+    - name: git-repo-user-name
+      type: string
     - name: ignore-attrs
       type: string 
   volumes:
@@ -270,8 +274,8 @@ spec:
         ls
  
         git config --global credential.helper store
-        git config --global user.email "gajan@jp.ibm.com"
-        git config --global user.name "gajan@jp.ibm.com"                     
+        git config --global user.email $(params.git-repo-user-email)
+        git config --global user.name $(params.git-repo-user-name)
         git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    
         git config --get remote.origin.fetch 
 
