@@ -1,0 +1,17 @@
+apiVersion: research.ibm.com/v1alpha1
+kind: ResourceProtectionProfile
+metadata:
+  name: rpp-merged
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  rules:
+    - match:
+        - kind: Service
+          name: reverse-words
+        - kind: Deployment
+          name: reverse-words
+        - kind: SealedSecret
+          name: registry-secret
+        - kind: Ingress
+          name: reverse-words
