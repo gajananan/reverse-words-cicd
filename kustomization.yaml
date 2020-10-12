@@ -9,6 +9,3 @@ resources:
   - namespace.yaml
   - ingress.yaml
   - sealed-registry-secret.yaml
-  - rsig-rpp-merged.yaml
-  - rsig-merged.yaml
-  - rpp-merged.yaml
