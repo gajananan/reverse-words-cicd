@@ -42,9 +42,9 @@ spec:
         echo ""
         echo "---------------------------------------------------------"
         echo "Clone artifacts $(params.source-branch) branch"
-        git fetch
+        git fetch all
         git checkout $(params.source-branch)
-        git pull --allow-unrelated-histories
+        git pull origin $(params.source-branch)
         echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
         pwd
         ls
@@ -207,7 +207,7 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Content of $rsigfilename"
+        echo "Content of ResourceSignature: $rsigfilename"
         cat $rsigfilename
         echo "---------------------------------------------------------"
              
@@ -219,7 +219,7 @@ spec:
  
         echo ""
         echo "---------------------------------------------------------" 
-        echo "Content of ResourceSignature"
+        echo "Content of ResourceSignature: $rsigfilename"
         cat  $rsigfilename
         echo "---------------------------------------------------------" 
         echo ""
@@ -231,20 +231,22 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Add  rsig to kustomization.yaml"
+        echo "Add $rsigfilename to kustomization.yaml"
 
         yq w -i  kustomization.yaml 'resources.[+]' "rsig-merged.yaml"
-        #yq w -i  kustomization.yaml 'resources.[+]' "rpp-merged.yaml"
+        yq w -i  kustomization.yaml 'resources.[+]' "rsp-merged.yaml"
 
         echo ""
         echo "---------------------------------------------------------"
         echo "Content of kustomization.yaml"
         cat  kustomization.yaml
         echo ""
+        echo ""
         echo "Set argocd wave annotation"
         cat rsp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsp-merged.yaml
         mv copy-rsp-merged.yaml rsp-merged.yaml
-
+        echo ""
+        echo ""
         echo "Remove temp files"
         if [ -f temp-aaa.yaml ]; then
            rm temp-aaa.yaml
