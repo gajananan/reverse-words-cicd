@@ -214,7 +214,7 @@ spec:
         echo ""
         echo "---------------------------------------------------------"
         echo "Set argocd wave annotation"
-        cat $rsigfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-1"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
+        cat $rsigfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
         mv copy-rsig-merged.yaml $rsigfilename
  
         echo ""
@@ -242,7 +242,7 @@ spec:
         cat  kustomization.yaml
         echo ""
         echo "Set argocd wave annotation"
-        cat rsp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rsp-merged.yaml
+        cat rsp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsp-merged.yaml
         mv copy-rsp-merged.yaml rsp-merged.yaml
 
         echo "Remove temp files"
