@@ -1,0 +1,13 @@
+apiVersion: apis.integrityshield.io/v1alpha1
+kind: ResourceSigningProfile
+metadata:
+  name: rsp-merged
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  protectRules:
+    - match:
+        - kind: Service
+        - kind: Deployment
+        - kind: SealedSecret
+        - kind: Ingress
