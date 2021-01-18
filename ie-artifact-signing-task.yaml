@@ -302,7 +302,7 @@ spec:
         echo ""
         echo "---------------------------------------------------------"
         echo "Push changes from "$(params.source-branch)" to "$(params.dest-branch)" branch"
-        git push -d origin "$(params.dest-branch)"
+        git push origin --delete "$(params.dest-branch)"
         echo ""
         git checkout -b "$(params.dest-branch)"
         echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
