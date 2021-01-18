@@ -15,4 +15,4 @@ spec:
     - name: cicd-git-user-name
       value: gajan@jp.ibm.com
     - name: signer-email
-      value: gajan@jp.ibm.com
+      value: signer@enterprise.com

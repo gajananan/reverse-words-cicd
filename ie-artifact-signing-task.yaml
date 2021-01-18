@@ -34,14 +34,11 @@ spec:
       emptyDir: {}
   steps:
     - name: clone-staging-release
-      image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
+      image: quay.io/gajananan/gitops-sign-artifact:rc1
       imagePullPolicy: Always
       workingdir: /workspace/cicd
       script: |
-        #!/bin/bash
-       
-
-        
+        #!/bin/bash 
         echo ""
         echo "---------------------------------------------------------"
         echo "Clone artifacts $(params.source-branch) branch"
@@ -61,9 +58,9 @@ spec:
         echo "Before"
         cat kustomization.yaml
         echo ""
-        yq d -i kustomization.yaml 'resources.[rsig-rpp-merged.yaml]'
+        #yq d -i kustomization.yaml 'resources.[rsig-rpp-merged.yaml]'
         yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
-        yq d -i kustomization.yaml 'resources.[rpp-merged.yaml]'
+        yq d -i kustomization.yaml 'resources.[rsp-merged.yaml]'
         echo ""
         echo "---------------------------------------------------------"        
         echo "After"
@@ -72,8 +69,8 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Add label to namespace"
-        yq w -i namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
+        #echo "Add label to namespace"
+        #yq w -i namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
         echo ""
         echo "Add argocd wave annotation"
         cat namespace.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-4"' | yq r - --prettyPrint >> copy-namespace.yaml
@@ -92,27 +89,27 @@ spec:
         
         echo ""
         echo "---------------------------------------------------------"
-        echo "Remove old RPP"
-        if [ -f rpp-merged.yaml ]; then
-           rm rpp-merged.yaml
+        echo "Remove old RSP"
+        if [ -f rsp-merged.yaml ]; then
+           rm rsp-merged.yaml
         fi
         echo done
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Generate RPP <script> <inputfile> <IGNORE_ATTR>"
+        echo "Generate RSP <script> <inputfile> <IGNORE_ATTR>"
         echo ignore-attrs: $(params.ignore-attrs)
-        /generate_rpp.sh merged.yaml $(params.ignore-attrs)
+        /generate_rsp.sh merged.yaml $(params.ignore-attrs)
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Check generated RPP"
-        cat rpp-merged.yaml
+        echo "Check generated RSP"
+        cat rsp-merged.yaml
         echo "---------------------------------------------------------" 
         echo "done"  
 
     - name: sign-artifacts
-      image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
+      image: quay.io/gajananan/gitops-sign-artifact:rc1
       imagePullPolicy: Always
       volumeMounts:
         - mountPath: /secrets/
@@ -149,49 +146,47 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Generate signature for RPP"
-        rppfilename="rpp-merged.yaml"
-        rppfile=$(find . -name "$rppfilename")
+        #echo "Generate signature for RPP"
+        #rspfilename="rsp-merged.yaml"
+        #rspfile=$(find . -name "$rspfilename")
         
 
-        rppfilebasename=$(basename -- "$rppfile")
-        echo "rsfilebasename: $rppfilebasename"
+        #rspfilebasename=$(basename -- "$rspfile")
+        #echo "rsfilebasename: $rspfilebasename"
 
-        rsigrppfilename="rsig-$rppfilebasename"
+        #rsigrspfilename="rsig-$rspfilebasename"
  
-        if [ -f $rsigrppfilename ]; then
-           rm $rsigrppfilename
-        fi        
+        #if [ -f $rsigrspfilename ]; then
+         #  rm $rsigrspfilename
+        #fi        
 
-        /gpg-rs-sign.sh $signer $rppfile $rsigrppfilename
+        #/gpg-rs-sign.sh $signer $rppfile $rsigrppfilename
 
 
-        echo ""
-        echo "Set argocd wave for rsigrpp"
-        echo "---------------------------------------------------------"
-        cat $rsigrppfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsig-rpp-merged.yaml
-        mv copy-rsig-rpp-merged.yaml $rsigrppfilename
+        #echo "" echo "Set argocd wave for rsigrpp" echo "---------------------------------------------------------" cat $rsigrppfilename | yq r - -j | jq -r 
+        #'.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsig-rpp-merged.yaml mv copy-rsig-rpp-merged.yaml $rsigrppfilename
 
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Content of ResourceSignature for rpp"
-        cat  $rsigrppfilename
-        echo "---------------------------------------------------------"
-        echo "" 
+        #echo ""
+        #echo "---------------------------------------------------------"
+        #echo "Content of ResourceSignature for rpp"
+        #cat  $rsigrppfilename
+        #echo "---------------------------------------------------------"
+        #echo "" 
  
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Add rsig-rpp to kustomization.yaml"
-        if [[ " ${resources[*]} " == *"rsig-rpp-merged.yaml"* ]]; then
-             echo "rsig-rpp-merged.yaml is found"
-        else
-             yq w -i  kustomization.yaml 'resources.[+]' "rsig-rpp-merged.yaml"
-        fi
-        echo done
 
-        echo ""
-        echo "Completed generating rsig for RPP"
-        echo ""
+        #echo ""
+        #echo "---------------------------------------------------------"
+        #echo "Add rsig-rpp to kustomization.yaml"
+        #if [[ " ${resources[*]} " == *"rsig-rpp-merged.yaml"* ]]; then
+        #     echo "rsig-rpp-merged.yaml is found"
+        #else
+        #     yq w -i  kustomization.yaml 'resources.[+]' "rsig-rpp-merged.yaml"
+        #fi
+        #echo done
+
+        #echo ""
+        #echo "Completed generating rsig for RPP"
+        #echo ""
 
         echo ""
         echo "---------------------------------------------------------"
@@ -236,10 +231,10 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Add rpp, rsig to kustomization.yaml"
+        echo "Add  rsig to kustomization.yaml"
 
         yq w -i  kustomization.yaml 'resources.[+]' "rsig-merged.yaml"
-        yq w -i  kustomization.yaml 'resources.[+]' "rpp-merged.yaml"
+        #yq w -i  kustomization.yaml 'resources.[+]' "rpp-merged.yaml"
 
         echo ""
         echo "---------------------------------------------------------"
@@ -247,8 +242,8 @@ spec:
         cat  kustomization.yaml
         echo ""
         echo "Set argocd wave annotation"
-        cat rpp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rpp-merged.yaml
-        mv copy-rpp-merged.yaml rpp-merged.yaml
+        cat rsp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rsp-merged.yaml
+        mv copy-rsp-merged.yaml rsp-merged.yaml
 
         echo "Remove temp files"
         if [ -f temp-aaa.yaml ]; then
@@ -261,7 +256,7 @@ spec:
            rm merged.yaml
         fi
     - name: push-generated-resources
-      image: us.icr.io/mutation-advisor/gitops-sign-artifact:rc1
+      image: quay.io/gajananan/gitops-sign-artifact:rc1
       workingdir: /workspace/cicd
       script: |
         #!/bin/bash
@@ -296,8 +291,8 @@ spec:
         echo "Push the generated resource to pre-stage branch"
         git add namespace.yaml
         git add kustomization.yaml
-        git add rsig-rpp-merged.yaml
-        git add rpp-merged.yaml
+        #git add rsig-rpp-merged.yaml
+        git add rsp-merged.yaml
         git add rsig-merged.yaml
         git commit -m "Add generated resource protection profile and resources signature"
         git push origin $(git rev-parse --abbrev-ref HEAD) &> /dev/null
