@@ -4,16 +4,18 @@ metadata:
   labels:
     app: reverse-words
   name: reverse-words
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   revisionHistoryLimit: 0
   template:
     spec:
       containers:
-      - env:
-        - name: RELEASE
-          value: Stage Release
-        - $patch: replace
-        image: quay.io/gajananan/tekton-reversewords:f1d82253926d2e72c22123a76f479038489f2f25
-        name: reverse-words
+        - env:
+            - name: RELEASE
+              value: Stage Release
+            - $patch: replace
+          image: quay.io/gajananan/tekton-reversewords:f1d82253926d2e72c22123a76f479038489f2f25
+          name: reverse-words
       imagePullSecrets:
-      - name: registry-secret
+        - name: registry-secret
