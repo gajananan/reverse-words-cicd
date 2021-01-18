@@ -10,3 +10,4 @@ resources:
   - ingress.yaml
   - sealed-registry-secret.yaml
   - rsig-merged.yaml
+  - rsp-merged.yaml

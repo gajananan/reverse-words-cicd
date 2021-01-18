@@ -3,7 +3,7 @@ kind: ResourceSigningProfile
 metadata:
   name: rsp-merged
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-wave: "-3"
 spec:
   protectRules:
     - match:
