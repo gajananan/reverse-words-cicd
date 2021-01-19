@@ -9,4 +9,9 @@ resources:
   - namespace.yaml
   - ingress.yaml
   - sealed-registry-secret.yaml
+  - rsig-service.yaml
+  - rsig-deployment.yaml
+  - rsig-resourcesigningprofile.yaml
+  - rsig-sealedsecret.yaml
+  - rsig-ingress.yaml
   - rsp-merged.yaml

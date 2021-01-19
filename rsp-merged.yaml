@@ -9,5 +9,6 @@ spec:
     - match:
         - kind: Service
         - kind: Deployment
+        - kind: ResourceSigningProfile
         - kind: SealedSecret
         - kind: Ingress
