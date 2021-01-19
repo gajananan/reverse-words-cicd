@@ -53,18 +53,34 @@ spec:
         echo ""
         echo "---------------------------------------------------------"
         echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
-        #pwd
-        #ls
         echo ""
         echo done
- 
+
         echo ""
         echo "---------------------------------------------------------"
         echo "Check updated image name"
         cat deployment.yaml | yq r - -j | jq -r '.spec.template.spec.containers' | jq -r '.[].image'
         echo ""
         echo done
- 
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Clone artifacts $(params.dest-branch) branch"
+        git fetch all
+        dest-branch=$(git ls-remote origin stage-plus)
+        if [ -z $dest-branch ]; then
+           git checkout -b $(params.dest-branch)
+        else
+           git checkout $(params.dest-branch)
+           git pull origin $(params.dest-branch)
+        fi
+        git merge $(params.source-branch)
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+        echo ""
+        echo done
+
         echo ""
         echo "---------------------------------------------------------"
         echo "Check content of kustomization.yaml"
@@ -247,21 +263,22 @@ spec:
         git add $rsfile
 
         git commit -m "Add generated resource protection profile and resources signature"
-        git push origin $(git rev-parse --abbrev-ref HEAD) &> /dev/null
+        #git push origin $(git rev-parse --abbrev-ref HEAD) &> /dev/null
+        git push origin $(params.dest-branch)
         echo "done"
 
  
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Push changes from "$(params.source-branch)" to "$(params.dest-branch)" branch"
-        git push origin --delete "$(params.dest-branch)"
-        echo ""
-        git checkout -b "$(params.dest-branch)"
-        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
-        git status
-        echo ""
-        git push origin "$(params.dest-branch)"
-        echo "done"
+        #echo ""
+        #echo "---------------------------------------------------------"
+        #echo "Push changes from "$(params.source-branch)" to "$(params.dest-branch)" branch"
+        #git push origin --delete "$(params.dest-branch)"
+        #echo ""
+        #git checkout -b "$(params.dest-branch)"
+        #echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+        #git status
+        #echo ""
+        #git push origin "$(params.dest-branch)"
+        #echo "done"
       env:
         - name: AUTH_TOKEN
           valueFrom:
