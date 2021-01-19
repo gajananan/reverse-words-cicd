@@ -71,6 +71,7 @@ spec:
         #yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
 
         yq r -d'*' merged.yaml -j | while read doc;
+        do
            kind=$(echo $doc | yq r - -j | jq -r '.kind')
            if [ $kind = 'Namespace' ]; then
               continue
@@ -205,6 +206,7 @@ spec:
         #echo "---------------------------------------------------------" 
         #echo ""
         yq r -d'*' merged.yaml -j | while read doc;
+        do
            kind=$(echo $doc | yq r - -j | jq -r '.kind')
            if [ $kind = 'Namespace' ]; then
               continue 
@@ -304,6 +306,7 @@ spec:
         #git add rsig-merged.yaml
 
         yq r -d'*' merged.yaml -j | while read doc;
+        do
            if [ $kind = 'Namespace' ]; then
               continue
            else
