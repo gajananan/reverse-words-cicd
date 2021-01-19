@@ -100,10 +100,10 @@ spec:
         echo "---------------------------------------------------------"
         echo "Remove previous IShield resources"
         if [ -f $rspfile ]; then
-           rm rspfile
+           rm $rspfile
         fi
         if [ -f $rsfile ]; then
-           rm rsfile
+           rm $rsfile
         fi 
         echo ""
         echo done
@@ -115,7 +115,7 @@ spec:
         /generate_rsp.sh $mergedrscfile $rspfile $(params.ignore-attrs)
         echo ""
         echo done
-        echo """
+        echo ""
         echo "---------------------------------------------------------"
         echo "Check generated RSP"
         cat  $rspfile
@@ -151,7 +151,7 @@ spec:
         mergedrscfile="merged.yaml"
         mergedrsigrscfile="rsig-merged.yaml"
         rsfile="rs.yaml"
-        copyrsfile="copy-rs.yaml"
+
         echo ""
         echo "---------------------------------------------------------"
         echo "Retrive keyring-secret"       
@@ -190,6 +190,10 @@ spec:
         echo "---------------------------------------------------------"
         echo "Generated ResourceSignature"
         if [ -f  $mergedrscfile ]; then
+           echo ""
+           echo "Content of $mergedrscfile"
+           cat $mergedrscfile
+           echo ""
            /gpg-rs-sign.sh $signer $mergedrscfile $mergedrsigrscfile
         else
            exit 1
@@ -197,82 +201,7 @@ spec:
         echo ""
         echo done
 
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Prepare final ResourceSignature"
-        if [ -f $mergedrsigrscfile ]; then
-            rsigsig=$(cat $mergedrsigrscfile | yq r - -j | jq -r '.metadata.annotations."integrityshield.io/signature"')
-            sigtime=$(cat $mergedrsigrscfile | yq r - -j | jq -r '.metadata.labels."integrityshield.io/sigtime"')
-            msg=$(cat $mergedrsigrscfile | yq r - 'spec.data.*.message')
-            sig=$(cat $mergedrsigrscfile | yq r - 'spec.data.*.signature')
-            type=$(cat $mergedrsigrscfile | yq r - 'spec.data.*.type')
-
-            yq r -d'*' $mergedrscfile -j | while read doc;
-            do 
-                kind=$(echo $doc | yq r - -j | jq -r '.kind')
-                name=$(echo $doc | yq r - -j | jq -r '.metadata.name')
-                apiver=$(echo $doc | yq r - -j | jq -r '.apiVersion')
-                if [ $kind = 'Namespace' ]; then
-                    coninue
-                else
-                    kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
-                    tmpfile="tmp-$kind.yaml" 
-                    tmpsigfile="tmp-rsig-$kind.yaml"
-                    echo $doc > $tmpfile
-                    yq w -i $tmpsigfile 'apiVersion' 'apis.integrityshield.io/v1alpha1'
-                    yq w -i $tmpsigfile 'kind' 'ResourceSignature'
-
-                    yq w -i $tmpsigfile 'metadata.annotations."integrityshield.io/messageScope"' 'spec'
-                    yq w -i $tmpsigfile 'metadata.annotations."integrityshield.io/signature"' $rsigsig
-                    tmprsigname="rsig-$kindlowcase-$name"
-                    yq w -i $tmpsigfile 'metadata.name' $tmprsigname
-
-                    yq w -i $tmpsigfile 'metadata.labels."integrityshield.io/sigobject-apiversion"' $apiver                   
-                    yq w -i $tmpsigfile 'metadata.labels."integrityshield.io/sigobject-kind"' $kind
-                    yq w -i --tag !!str $tmpsigfile 'metadata.labels."integrityshield.io/sigtime"' $sigtime
-                    
-                    yq w -i $tmpsigfile spec.data.[0].message $msg
-                    yq w -i $tmpsigfile spec.data.[0].signature $sig
-                    yq w -i $tmpsigfile spec.data.[0].type $type
-
-                    echo ""
-                    echo "---------------------------------------------------------"
-                    echo "Content of  $tmpsigfile"
-                    cat $tmpsigfile
-                    echo ""
-                    echo done
-
-                    cat $tmpsigfile  >> $rsfile
-                    echo "---" >> $rsfile
-                fi
-            done
-
-            cat $rsfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> $copyrsfile
-            mv copyrsfile $rsfile
-
-            echo ""
-            echo "---------------------------------------------------------"
-            echo "Content of  $rsfile"
-            cat  $rsfile
-            echo ""
-            echo done
-            
-            yq w -i  kustomization.yaml 'resources.[+]' "$rsfile"
-            echo ""
-            echo "---------------------------------------------------------"
-            echo "Content of kustomization.yaml"
-            cat  kustomization.yaml
-            echo ""
-            echo done
-        else
-           exit 1
-        fi
-        echo ""
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Completed signing artifacts"
-        echo ""
-        echo done
+        /generate-combined.rs.sh $mergedrscfile $mergedrsigrscfile $rsfile
     
     - name: push-generated-resources
       image: quay.io/gajananan/gitops-sign-artifact:rc1
