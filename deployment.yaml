@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
   labels:
     app: reverse-words
   name: reverse-words
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
 spec:
   revisionHistoryLimit: 0
   template:
     spec:
       containers:
-        - env:
-            - name: RELEASE
-              value: Stage Release
-            - $patch: replace
-          image: quay.io/gajananan/tekton-reversewords:f1d82253926d2e72c22123a76f479038489f2f25
-          name: reverse-words
+      - env:
+        - name: RELEASE
+          value: Stage Release
+        - $patch: replace
+        image: quay.io/gajananan/tekton-reversewords:a4ea2df9a35fe4221671ee95bd38ba57da3b6bc9
+        name: reverse-words
       imagePullSecrets:
-        - name: registry-secret
+      - name: registry-secret
