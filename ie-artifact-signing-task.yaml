@@ -53,13 +53,34 @@ spec:
         cat deployment.yaml | yq r - -j | jq -r '.spec.template.spec.containers' | jq -r '.[].image'
         echo done
   
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Compose using kustomize"
+        kustomize build  > merged.yaml
+        echo "Content of merged.yaml"
+        cat merged.yaml
+        echo ".........................................................."
+        echo "done"
+
         echo "---------------------------------------------------------"  
         echo "Remove IE resources from  kustomization.yaml "
         echo "Before"
         cat kustomization.yaml
         echo ""
         #yq d -i kustomization.yaml 'resources.[rsig-rpp-merged.yaml]'
-        yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
+        #yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
+
+        yq r -d'*' merged.yaml -j | while read doc;
+           kind=$(echo $doc | yq r - -j | jq -r '.kind')
+           if [ $kind = 'Namespace' ]; then
+              continue
+           else
+              kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
+              rscfile="rsig-${kindlowcase}.yaml"
+              yq d -i kustomization.yaml 'resources.[$rscfile]'
+           fi
+        done
+
         yq d -i kustomization.yaml 'resources.[rsp-merged.yaml]'
         echo ""
         echo "---------------------------------------------------------"        
@@ -84,14 +105,7 @@ spec:
         #cat deployment.yaml
         #echo done
                
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Compose using kustomize"
-        kustomize build  > merged.yaml
-        echo "Content of merged.yaml"
-        cat merged.yaml
-        echo ".........................................................."
-        echo "done"
+
         
         echo ""
         echo "---------------------------------------------------------"
@@ -152,48 +166,7 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        #echo "Generate signature for RPP"
-        #rspfilename="rsp-merged.yaml"
-        #rspfile=$(find . -name "$rspfilename")
-        
-
-        #rspfilebasename=$(basename -- "$rspfile")
-        #echo "rsfilebasename: $rspfilebasename"
-
-        #rsigrspfilename="rsig-$rspfilebasename"
  
-        #if [ -f $rsigrspfilename ]; then
-         #  rm $rsigrspfilename
-        #fi        
-
-        #/gpg-rs-sign.sh $signer $rppfile $rsigrppfilename
-
-
-        #echo "" echo "Set argocd wave for rsigrpp" echo "---------------------------------------------------------" cat $rsigrppfilename | yq r - -j | jq -r 
-        #'.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsig-rpp-merged.yaml mv copy-rsig-rpp-merged.yaml $rsigrppfilename
-
-        #echo ""
-        #echo "---------------------------------------------------------"
-        #echo "Content of ResourceSignature for rpp"
-        #cat  $rsigrppfilename
-        #echo "---------------------------------------------------------"
-        #echo "" 
- 
-
-        #echo ""
-        #echo "---------------------------------------------------------"
-        #echo "Add rsig-rpp to kustomization.yaml"
-        #if [[ " ${resources[*]} " == *"rsig-rpp-merged.yaml"* ]]; then
-        #     echo "rsig-rpp-merged.yaml is found"
-        #else
-        #     yq w -i  kustomization.yaml 'resources.[+]' "rsig-rpp-merged.yaml"
-        #fi
-        #echo done
-
-        #echo ""
-        #echo "Completed generating rsig for RPP"
-        #echo ""
-
         echo ""
         echo "---------------------------------------------------------"
         echo "Generate signature for rsfile"
@@ -201,45 +174,71 @@ spec:
         rsfile=$(find . -name "$rsfilename")
         echo "rsfile $rsfile"
 
-        rsfilebasename=$(basename -- "$rsfile")
-        echo "rsfilebasename: $rsfilebasename"
-        rsigfilename="rsig-$rsfilebasename"
+        #rsfilebasename=$(basename -- "$rsfile")
+        #echo "rsfilebasename: $rsfilebasename"
+
+        #rsigfilename="rsig-$rsfilebasename"
+
         
-        if [ -f $rsigfilename ]; then
-           rm $rsigfilename
-        fi
+        #if [ -f $rsigfilename ]; then
+        #   rm $rsigfilename
+        #fi
 
-        /gpg-rs-sign.sh $signer $rsfile $rsigfilename
+        #/gpg-rs-sign.sh $signer $rsfile $rsigfilename
 
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Content of ResourceSignature: $rsigfilename"
-        cat $rsigfilename
-        echo "---------------------------------------------------------"
+        #echo ""
+        #echo "---------------------------------------------------------"
+        #echo "Content of ResourceSignature: $rsigfilename"
+        #cat $rsigfilename
+        #echo "---------------------------------------------------------"
              
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Set argocd wave annotation"
-        cat $rsigfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
-        mv copy-rsig-merged.yaml $rsigfilename
+        #echo ""
+        #echo "---------------------------------------------------------"
+        #echo "Set argocd wave annotation"
+        #cat $rsigfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
+        #mv copy-rsig-merged.yaml $rsigfilename
  
-        echo ""
-        echo "---------------------------------------------------------" 
-        echo "Content of ResourceSignature: $rsigfilename"
-        cat  $rsigfilename
-        echo "---------------------------------------------------------" 
-        echo ""
+        #echo ""
+        #echo "---------------------------------------------------------" 
+        #echo "Content of ResourceSignature: $rsigfilename"
+        #cat  $rsigfilename
+        #echo "---------------------------------------------------------" 
+        #echo ""
+        yq r -d'*' merged.yaml -j | while read doc;
+           kind=$(echo $doc | yq r - -j | jq -r '.kind')
+           if [ $kind = 'Namespace' ]; then
+              continue 
+           else
+              kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
+              splitrsfile="split-${kindlowcase}.yaml"
+              echo $doc > $splitrsfile 
+              rsigrscfile="rsig-${kindlowcase}.yaml"
+              copyrsigrscfile="copyrsig-${kindlowcase}.yaml"
+              /gpg-rs-sign.sh $signer $splitrsfile $rsigrscfile
+              cat $rsigrscfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> $copyrsigrscfile
+              mv $copyrsigrscfile $rsigrscfile
+              echo "---------------------------------------------------------"
+              echo "Content of ResourceSignature"
+              cat $rsigrscfile
+              echo "---------------------------------------------------------"
+              echo "" 
+              echo "---------------------------------------------------------"
+              #echo "Add $rsigrscfile to kustomization.yaml"
+              yq w -i  kustomization.yaml 'resources.[+]' "$rsigrscfile"
+              echo "---------------------------------------------------------"
+              echo ""
+           fi
+        done
 
-        
         echo ""
         echo "---------------------------------------------------------"
         echo "Completed signing artifacts"
 
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Add $rsigfilename to kustomization.yaml"
+        #echo ""
+        #echo "---------------------------------------------------------"
+        #echo "Add $rsigfilename to kustomization.yaml"
 
-        yq w -i  kustomization.yaml 'resources.[+]' "rsig-merged.yaml"
+        #yq w -i  kustomization.yaml 'resources.[+]' "rsig-merged.yaml"
         yq w -i  kustomization.yaml 'resources.[+]' "rsp-merged.yaml"
 
         echo ""
@@ -302,7 +301,18 @@ spec:
         git add kustomization.yaml
         #git add rsig-rpp-merged.yaml
         git add rsp-merged.yaml
-        git add rsig-merged.yaml
+        #git add rsig-merged.yaml
+
+        yq r -d'*' merged.yaml -j | while read doc;
+           if [ $kind = 'Namespace' ]; then
+              continue
+           else
+              kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
+              rscfile="rsig-${kindlowcase}.yaml"
+              git add $rscfile
+           fi
+        done
+
         git commit -m "Add generated resource protection profile and resources signature"
         git push origin $(git rev-parse --abbrev-ref HEAD) &> /dev/null
         echo "done"
