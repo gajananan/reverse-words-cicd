@@ -8,6 +8,8 @@ spec:
       value: $(body.head_commit.id)
     - name: gitrepositoryurl
       value: $(body.repository.url)
+    - name: webhooks-tekton-git-branch
+      value: $(body.webhooks-tekton-git-branch)
     - name: cicd-git-url
       value: https://github.com/gajananan/reverse-words-cicd
     - name: cicd-git-user-email
@@ -16,3 +18,4 @@ spec:
       value: gajan@jp.ibm.com
     - name: signer-email
       value: signer@enterprise.com
+    

@@ -18,6 +18,8 @@ spec:
     type: string
   - name: cicd-git-user-name
     type: string
+  - name:  gitrepositoryurl
+    type: string
   tasks:
   - name: ie-artifact-signing-task
     taskRef:

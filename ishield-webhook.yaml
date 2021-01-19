@@ -54,6 +54,8 @@ spec:
             value: $(params.cicd-git-user-email)
           - name: cicd-git-user-name
             value: $(params.cicd-git-user-name)
+          - name: gitrepositoryurl
+            value: $(params.gitrepositoryurl)
         resources:
           - name: cicd-git
             resourceRef:
@@ -74,6 +76,8 @@ spec:
               secretKey: secret
             eventTypes:
               - push
+        - cel:
+            filter: "body.repository.name in ['reverse-words-cicd']"
       bindings:
         - name: ishield-github-triggerbinding
       template:	
