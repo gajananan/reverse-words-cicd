@@ -52,7 +52,16 @@ spec:
         echo "Check updated image name"
         cat deployment.yaml | yq r - -j | jq -r '.spec.template.spec.containers' | jq -r '.[].image'
         echo done
-  
+ 
+        echo "---------------------------------------------------------"  
+        echo "Remove IE resources from  kustomization.yaml "
+        echo "Before"
+        cat kustomization.yaml
+        echo ""
+        #yq d -i kustomization.yaml 'resources.[rsig-rpp-merged.yaml]'
+        #yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
+        yq d -i kustomization.yaml 'resources.[rsp-merged.yaml]'
+
         echo ""
         echo "---------------------------------------------------------"
         echo "Compose using kustomize"
@@ -62,18 +71,10 @@ spec:
         echo ".........................................................."
         echo "done"
 
-        echo "---------------------------------------------------------"  
-        echo "Remove IE resources from  kustomization.yaml "
-        echo "Before"
-        cat kustomization.yaml
-        echo ""
-        #yq d -i kustomization.yaml 'resources.[rsig-rpp-merged.yaml]'
-        #yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
-
         yq r -d'*' merged.yaml -j | while read doc;
         do
            kind=$(echo $doc | yq r - -j | jq -r '.kind')
-           if [ $kind = 'Namespace' ]; then
+           if { [ $kind = 'Namespace' ] || [$kind = 'ResourceSignature'] || [$kind = 'ResourceSigningProfile'] } ; then
               continue
            else
               kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
@@ -82,7 +83,7 @@ spec:
            fi
         done
 
-        yq d -i kustomization.yaml 'resources.[rsp-merged.yaml]'
+        #yq d -i kustomization.yaml 'resources.[rsp-merged.yaml]'
         echo ""
         echo "---------------------------------------------------------"        
         echo "After"
@@ -208,7 +209,7 @@ spec:
         yq r -d'*' merged.yaml -j | while read doc;
         do
            kind=$(echo $doc | yq r - -j | jq -r '.kind')
-           if [ $kind = 'Namespace' ]; then
+           if { [ $kind = 'Namespace' ] || [$kind = 'ResourceSignature'] || [$kind = 'ResourceSigningProfile'] } ; then
               continue 
            else
               kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
@@ -307,7 +308,7 @@ spec:
 
         yq r -d'*' merged.yaml -j | while read doc;
         do
-           if [ $kind = 'Namespace' ]; then
+           if { [ $kind = 'Namespace' ] || [$kind = 'ResourceSignature'] || [$kind = 'ResourceSigningProfile'] } ; then
               continue
            else
               kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
