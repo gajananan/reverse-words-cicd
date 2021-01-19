@@ -52,41 +52,41 @@ spec:
     type: string
   tasks:
 
-  - name: lint
-    taskRef:
-      name: golangci-lint
-    params:
-      - name: package
-        value: github.com/gajananan/reverse-words
-      - name: flags
-        value: --verbose
-      - name: GOOS
-        value: "linux"
-    resources:
-      inputs:
-      - name: source
-        resource: app-git
+#  - name: lint
+#    taskRef:
+#      name: golangci-lint
+#    params:
+#      - name: package
+#        value: github.com/gajananan/reverse-words
+#      - name: flags
+#        value: --verbose
+#      - name: GOOS
+#        value: "linux"
+#    resources:
+#      inputs:
+#      - name: source
+#        resource: app-git
 
-  - name: test
-    taskRef:
-      name: golang-test
-    runAfter:
-      - lint
-    params:
-      - name: package
-        value: github.com/gajananan/reverse-words
-      - name: GOOS
-        value: "linux"
-    resources:
-      inputs:
-      - name: source
-        resource: app-git
+#  - name: test
+#    taskRef:
+#      name: golang-test
+#    runAfter:
+#      - lint
+#    params:
+#      - name: package
+#        value: github.com/gajananan/reverse-words
+#      - name: GOOS
+#        value: "linux"
+#    resources:
+#      inputs:
+#      - name: source
+#        resource: app-git
 
   - name: build-and-push
     taskRef:
       name: build-from-dockerfile
-    runAfter:
-      - test
+#    runAfter:
+#      - test
     params:
       - name: DOCKERFILE_PATH
         value: "./Dockerfile"
@@ -124,27 +124,3 @@ spec:
         value: "true"
       - name: branch-generate-name
         value: ""
-  - name: ie-artifact-signing-task
-    taskRef:
-      name: ie-artifact-signing-task
-    params:
-      - name: source-branch
-        value: "stage"
-      - name: dest-branch
-        value: "stage-plus"    
-      - name: signer-email
-        value: $(params.signer-email)
-      - name: git-repo-url 
-        value: $(params.cicd-git-url)
-      - name: git-repo-user-email
-        value: $(params.cicd-git-user-email)
-      - name: git-repo-user-name
-        value: $(params.cicd-git-user-name)
-      - name: ignore-attrs
-        value: "false"
-    runAfter:
-      - update-stage-deployment-image
-    resources:
-      inputs:
-      - name: cicd 
-        resource: cicd-git
