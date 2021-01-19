@@ -239,7 +239,7 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------" 
-        echo "Push the generated resource to pre-stage branch"
+        echo "Push the generated resource to stage-plus branch"
         git add namespace.yaml
         git add kustomization.yaml
         git add $rspfile
@@ -261,7 +261,6 @@ spec:
         echo ""
         git push origin "$(params.dest-branch)"
         echo "done"
-
       env:
         - name: AUTH_TOKEN
           valueFrom:

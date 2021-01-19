@@ -1,12 +1,12 @@
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerTemplate
 metadata:
-  name: reverseword-build-triggertemplate
+  name: ishield-triggertemplate
 spec:
   params:
     - name: gitrevision
       description: The git revision
-      default: main
+      default: stage
     - name: gitrepositoryurl
       description: The git repository url
     - name: cicd-git-url
@@ -18,19 +18,6 @@ spec:
     - name: signer-email
       description: email of the artifacts signer
   resourcetemplates:
-    - apiVersion: tekton.dev/v1alpha1
-      kind: PipelineResource
-      metadata:
-        name: reversewords-git-$(uid)
-      spec:
-        type: git
-        params:
-        - name: revision
-          value: $(params.gitrevision)
-        - name: url
-          value: $(params.gitrepositoryurl)
-        - name: sslVerify
-          value: "false"
     - apiVersion: tekton.dev/v1alpha1
       kind: PipelineResource
       metadata:
@@ -51,18 +38,14 @@ spec:
     - apiVersion: tekton.dev/v1alpha1
       kind: PipelineRun
       metadata:
-        name: reversewords-build-pipeline-run-$(uid)
+        name: ishield-pipeline-run-$(uid)
       spec:
         pipelineRef:
-          name: reverse-words-build-pipeline
+          name: ishield-pipeline
         serviceAccountNames:
-          - taskName: build-and-push
-            serviceAccountName: reversewords-pipeline
           - taskName: ie-artifact-signing-task
             serviceAccountName: reversewords-pipeline
         params:
-          - name: imageTag
-            value: $(params.gitrevision)
           - name: signer-email
             value: $(params.signer-email)
           - name: cicd-git-url
@@ -72,24 +55,18 @@ spec:
           - name: cicd-git-user-name
             value: $(params.cicd-git-user-name)
         resources:
-          - name: app-git
-            resourceRef:
-              name: reversewords-git-$(uid)
           - name: cicd-git
             resourceRef:
               name: reverse-words-cicd-git-$(uid)
-          - name: app-image
-            resourceRef:
-              name: reverse-words-image
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: EventListener
 metadata:
-  name: reversewords-webhook
+  name: ishield-webhook
 spec:
   serviceAccountName: reversewords-pipeline
   triggers:
-    - name: git-reversewords-trigger
+    - name: git-ishield-trigger
       interceptors:
         - github:
             secretRef:
@@ -98,6 +75,6 @@ spec:
             eventTypes:
               - push
       bindings:
-        - name: github-triggerbinding
-      template:
-        name: reverseword-build-triggertemplate
+        - name: ishield-github-triggerbinding
+      template:	
+        name: ishield-triggertemplate

@@ -115,7 +115,7 @@ spec:
       - name: new-image-url
         value: "quay.io/gajananan/tekton-reversewords:$(params.imageTag)"
       - name: source-branch
-        value: "pre-stage"
+        value: "stage"
       - name: source-repo
         value: "gajananan/reverse-words-cicd"
       - name: update-key
@@ -129,9 +129,9 @@ spec:
       name: ie-artifact-signing-task
     params:
       - name: source-branch
-        value: "pre-stage"
+        value: "stage"
       - name: dest-branch
-        value: "stage"    
+        value: "stage-plus"    
       - name: signer-email
         value: $(params.signer-email)
       - name: git-repo-url 
