@@ -151,7 +151,7 @@ spec:
         mergedrscfile="merged.yaml"
         mergedrsigrscfile="rsig-merged.yaml"
         rsfile="rs.yaml"
-
+        copyrsfile="copy-rs.yaml"
         echo ""
         echo "---------------------------------------------------------"
         echo "Retrive keyring-secret"       
@@ -202,6 +202,9 @@ spec:
         echo done
 
         /generate-combined.rs.sh $mergedrscfile $mergedrsigrscfile $rsfile
+
+        cat $rsfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> $copyrsfile
+        mv $copyrsfile $rsfile
     
     - name: push-generated-resources
       image: quay.io/gajananan/gitops-sign-artifact:rc1
