@@ -6,4 +6,8 @@ metadata:
     argocd.argoproj.io/sync-wave: "-3"
 spec:
   protectRules:
-    - match: ""
+    - match:
+        - kind: Service
+        - kind: Deployment
+        - kind: SealedSecret
+        - kind: Ingress
