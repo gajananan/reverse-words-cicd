@@ -39,7 +39,9 @@ spec:
       workingdir: /workspace/cicd
       script: |
         #!/bin/bash 
+        mergedrscfile="merged.yaml"
         rspfile="rsp.yaml"
+        copyrspfile="copy-rsp.yaml"
         rsfile="rs.yaml"
 
         echo ""
@@ -72,17 +74,17 @@ spec:
         echo ""
         echo "---------------------------------------------------------"  
         echo "Remove IShield resources from  kustomization.yaml "
-        yq d -i kustomization.yaml 'resources.[$rspfile]'
-        yq d -i kustomization.yaml 'resources.[$rsfile]'
+        yq d -i kustomization.yaml "resources.[$rspfile]"
+        yq d -i kustomization.yaml "resources.[$rsfile]"
         echo ""
         echo done
         echo ""
         echo "---------------------------------------------------------"
         echo "Compose using kustomize after removing IShield resources"
-        kustomize build  > merged.yaml
+        kustomize build  > $mergedrscfile
         echo ""
-        echo "Content of merged.yaml"
-        cat merged.yaml
+        echo "Content of $mergedrscfile"
+        cat $mergedrscfile
         echo ""
         echo "done"
 
@@ -96,10 +98,13 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Remove old RSP"
-        if [ -f rsp-merged.yaml ]; then
-           rm rsp-merged.yaml
+        echo "Remove previous IShield resources"
+        if [ -f $rspfile ]; then
+           rm rspfile
         fi
+        if [ -f $rsfile ]; then
+           rm rsfile
+        fi 
         echo ""
         echo done
 
@@ -107,15 +112,32 @@ spec:
         echo "---------------------------------------------------------"
         echo "Generate RSP <script> <inputfile> <IGNORE_ATTR>"
         echo ignore-attrs: $(params.ignore-attrs)
-        /generate_rsp.sh merged.yaml $(params.ignore-attrs)
+        /generate_rsp.sh $mergedrscfile $rspfile $(params.ignore-attrs)
         echo ""
         echo done
         echo """
         echo "---------------------------------------------------------"
         echo "Check generated RSP"
-        cat rsp-merged.yaml
+        cat  $rspfile
         echo "---------------------------------------------------------" 
         echo "done"  
+
+        echo ""
+        echo "Set argocd wave annotation for $rspfile"
+        echo "---------------------------------------------------------"
+        cat $rspfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> $copyrspfile
+        mv $copyrspfile $rspfile
+        echo ""
+        echo done
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Content of kustomization.yaml"
+        yq w -i  kustomization.yaml 'resources.[+]' "$rspfile"
+        cat  kustomization.yaml
+        echo ""
+        echo done
+
     - name: sign-artifacts
       image: quay.io/gajananan/gitops-sign-artifact:rc1
       imagePullPolicy: Always
@@ -128,6 +150,8 @@ spec:
 
         mergedrscfile="merged.yaml"
         mergedrsigrscfile="rsig-merged.yaml"
+        rsfile="rs.yaml"
+        copyrsfile="copy-rs.yaml"
         echo ""
         echo "---------------------------------------------------------"
         echo "Retrive keyring-secret"       
@@ -162,8 +186,156 @@ spec:
         echo ""
         echo done
   
-
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Generated ResourceSignature"
         if [ -f  $mergedrscfile ]; then
            /gpg-rs-sign.sh $signer $mergedrscfile $mergedrsigrscfile
-
+        else
+           exit 1
         fi
+        echo ""
+        echo done
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Prepare final ResourceSignature"
+        if [ -f $mergedrsigrscfile ]; then
+            rsigsig=$(cat $mergedrsigrscfile | yq r - -j | jq -r '.metadata.annotations."integrityshield.io/signature"')
+            sigtime=$(cat $mergedrsigrscfile | yq r - -j | jq -r '.metadata.labels."integrityshield.io/sigtime"')
+            msg=$(cat $mergedrsigrscfile | yq r - 'spec.data.*.message')
+            sig=$(cat $mergedrsigrscfile | yq r - 'spec.data.*.signature')
+            type=$(cat $mergedrsigrscfile | yq r - 'spec.data.*.type')
+
+            yq r -d'*' $mergedrscfile -j | while read doc;
+            do 
+                kind=$(echo $doc | yq r - -j | jq -r '.kind')
+                name=$(echo $doc | yq r - -j | jq -r '.metadata.name')
+                apiver=$(echo $doc | yq r - -j | jq -r '.apiVersion')
+                if [ $kind = 'Namespace' ]; then
+                    coninue
+                else
+                    kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
+                    tmpfile="tmp-$kind.yaml" 
+                    tmpsigfile="tmp-rsig-$kind.yaml"
+                    echo $doc > $tmpfile
+                    yq w -i $tmpsigfile 'apiVersion' 'apis.integrityshield.io/v1alpha1'
+                    yq w -i $tmpsigfile 'kind' 'ResourceSignature'
+
+                    yq w -i $tmpsigfile 'metadata.annotations."integrityshield.io/messageScope"' 'spec'
+                    yq w -i $tmpsigfile 'metadata.annotations."integrityshield.io/signature"' $rsigsig
+                    tmprsigname="rsig-$kindlowcase-$name"
+                    yq w -i $tmpsigfile 'metadata.name' $tmprsigname
+
+                    yq w -i $tmpsigfile 'metadata.labels."integrityshield.io/sigobject-apiversion"' $apiver                   
+                    yq w -i $tmpsigfile 'metadata.labels."integrityshield.io/sigobject-kind"' $kind
+                    yq w -i --tag !!str $tmpsigfile 'metadata.labels."integrityshield.io/sigtime"' $sigtime
+                    
+                    yq w -i $tmpsigfile spec.data.[0].message $msg
+                    yq w -i $tmpsigfile spec.data.[0].signature $sig
+                    yq w -i $tmpsigfile spec.data.[0].type $type
+
+                    echo ""
+                    echo "---------------------------------------------------------"
+                    echo "Content of  $tmpsigfile"
+                    cat $tmpsigfile
+                    echo ""
+                    echo done
+
+                    cat $tmpsigfile  >> $rsfile
+                    echo "---" >> $rsfile
+                fi
+            done
+
+            cat $rsfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> $copyrsfile
+            mv copyrsfile $rsfile
+
+            echo ""
+            echo "---------------------------------------------------------"
+            echo "Content of  $rsfile"
+            cat  $rsfile
+            echo ""
+            echo done
+            
+            yq w -i  kustomization.yaml 'resources.[+]' "$rsfile"
+            echo ""
+            echo "---------------------------------------------------------"
+            echo "Content of kustomization.yaml"
+            cat  kustomization.yaml
+            echo ""
+            echo done
+        else
+           exit 1
+        fi
+        echo ""
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Completed signing artifacts"
+        echo ""
+        echo done
+    
+    - name: push-generated-resources
+      image: quay.io/gajananan/gitops-sign-artifact:rc1
+      workingdir: /workspace/cicd
+      script: |
+        #!/bin/bash
+        rspfile="rsp.yaml"
+        rsfile="rs.yaml"
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Configure Git Repo"
+        pwd
+        ls
+ 
+        git config --global credential.helper store
+        git config --global user.email $(params.git-repo-user-email)
+        git config --global user.name $(params.git-repo-user-name)
+        git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    
+        git config --get remote.origin.fetch 
+
+        repourl=$(params.git-repo-url) 
+        echo repourl: $repourl
+        repourlwithtoken=$(echo $repourl | sed "s|github|$AUTH_TOKEN@github|g").git
+        git remote set-url origin  "$repourlwithtoken"
+        git fetch
+
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+        echo ""
+        git status
+        echo ""
+        echo done
+
+        echo ""
+        echo "---------------------------------------------------------" 
+        echo "Push the generated resource to pre-stage branch"
+        git add namespace.yaml
+        git add kustomization.yaml
+        git add $rspfile
+        git add $rsfile
+
+        git commit -m "Add generated resource protection profile and resources signature"
+        git push origin $(git rev-parse --abbrev-ref HEAD) &> /dev/null
+        echo "done"
+
+ 
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Push changes from "$(params.source-branch)" to "$(params.dest-branch)" branch"
+        git push origin --delete "$(params.dest-branch)"
+        echo ""
+        git checkout -b "$(params.dest-branch)"
+        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+        git status
+        echo ""
+        git push origin "$(params.dest-branch)"
+        echo "done"
+
+      env:
+        - name: AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: image-updater-secret
+              key: token
