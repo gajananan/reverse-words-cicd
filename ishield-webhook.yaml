@@ -77,7 +77,7 @@ spec:
             eventTypes:
               - push
         - cel:
-            filter: "body.repository.name in ['reverse-words-cicd']"
+            filter: "body.repository.name in ['reverse-words-cicd'] && body.ref in ['refs/heads/stage']"
       bindings:
         - name: ishield-github-triggerbinding
       template:	
