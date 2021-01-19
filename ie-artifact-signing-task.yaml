@@ -39,82 +39,68 @@ spec:
       workingdir: /workspace/cicd
       script: |
         #!/bin/bash 
+        rspfile="rsp.yaml"
+        rsfile="rs.yaml"
+
         echo ""
         echo "---------------------------------------------------------"
         echo "Clone artifacts $(params.source-branch) branch"
         git fetch all
         git checkout $(params.source-branch)
         git pull origin $(params.source-branch)
-        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
-        pwd
-        ls
         echo ""
-        echo "Check updated image name"
-        cat deployment.yaml | yq r - -j | jq -r '.spec.template.spec.containers' | jq -r '.[].image'
+        echo "---------------------------------------------------------"
+        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+        #pwd
+        #ls
+        echo ""
         echo done
  
-        echo "---------------------------------------------------------"  
-        echo "Remove IE resources from  kustomization.yaml "
-        echo "Before"
-        cat kustomization.yaml
-        echo ""
-        #yq d -i kustomization.yaml 'resources.[rsig-rpp-merged.yaml]'
-        #yq d -i kustomization.yaml 'resources.[rsig-merged.yaml]'
-        yq d -i kustomization.yaml 'resources.[rsp-merged.yaml]'
-
         echo ""
         echo "---------------------------------------------------------"
-        echo "Compose using kustomize"
-        kustomize build  > merged.yaml
-        echo "Content of merged.yaml"
-        cat merged.yaml
-        echo ".........................................................."
-        echo "done"
-
-        yq r -d'*' merged.yaml -j | while read doc;
-        do
-           kind=$(echo $doc | yq r - -j | jq -r '.kind')
-           if { [ $kind = 'Namespace' ] || [$kind = 'ResourceSignature'] || [$kind = 'ResourceSigningProfile'] } ; then
-              continue
-           else
-              kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
-              rscfile="rsig-${kindlowcase}.yaml"
-              yq d -i kustomization.yaml 'resources.[$rscfile]'
-           fi
-        done
-
-        #yq d -i kustomization.yaml 'resources.[rsp-merged.yaml]'
+        echo "Check updated image name"
+        cat deployment.yaml | yq r - -j | jq -r '.spec.template.spec.containers' | jq -r '.[].image'
         echo ""
-        echo "---------------------------------------------------------"        
-        echo "After"
+        echo done
+ 
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Check content of kustomization.yaml"
         cat kustomization.yaml
         echo done
 
         echo ""
-        echo "---------------------------------------------------------"
-        #echo "Add label to namespace"
-        #yq w -i namespace.yaml 'metadata.labels.integrity-enforced' --tag '!!str' true
+        echo "---------------------------------------------------------"  
+        echo "Remove IShield resources from  kustomization.yaml "
+        yq d -i kustomization.yaml 'resources.[$rspfile]'
+        yq d -i kustomization.yaml 'resources.[$rsfile]'
         echo ""
+        echo done
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Compose using kustomize after removing IShield resources"
+        kustomize build  > merged.yaml
+        echo ""
+        echo "Content of merged.yaml"
+        cat merged.yaml
+        echo ""
+        echo "done"
+
+        echo ""
+        echo "---------------------------------------------------------"
         echo "Add argocd wave annotation"
         cat namespace.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-4"' | yq r - --prettyPrint >> copy-namespace.yaml
         mv copy-namespace.yaml namespace.yaml
         cat namespace.yaml
-        echo done 
+        echo done               
 
-        #echo "Add argocd wave annotation"
-        #cat deployment.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="0"' | yq r - --prettyPrint >> copy-deployment.yaml
-        #mv copy-deployment.yaml deployment.yaml
-        #cat deployment.yaml
-        #echo done
-               
-
-        
         echo ""
         echo "---------------------------------------------------------"
         echo "Remove old RSP"
         if [ -f rsp-merged.yaml ]; then
            rm rsp-merged.yaml
         fi
+        echo ""
         echo done
 
         echo ""
@@ -122,14 +108,14 @@ spec:
         echo "Generate RSP <script> <inputfile> <IGNORE_ATTR>"
         echo ignore-attrs: $(params.ignore-attrs)
         /generate_rsp.sh merged.yaml $(params.ignore-attrs)
-
         echo ""
+        echo done
+        echo """
         echo "---------------------------------------------------------"
         echo "Check generated RSP"
         cat rsp-merged.yaml
         echo "---------------------------------------------------------" 
         echo "done"  
-
     - name: sign-artifacts
       image: quay.io/gajananan/gitops-sign-artifact:rc1
       imagePullPolicy: Always
@@ -139,13 +125,16 @@ spec:
       workingdir: /workspace/cicd
       script: |
         #!/bin/bash
-        
-        
+
+        mergedrscfile="merged.yaml"
+        mergedrsigrscfile="rsig-merged.yaml"
         echo ""
         echo "---------------------------------------------------------"
-        echo "Retrive keyring-secret"
-        
+        echo "Retrive keyring-secret"       
         cat /secrets/secring.gpg > /tmp/tmp-secring.gpg
+        echo "---------------------------------------------------------"
+        echo ""
+        echo done
 
         echo ""
         echo "---------------------------------------------------------"
@@ -162,181 +151,19 @@ spec:
         echo "List keys"
         gpg --list-keys
 
-        
-        signer=$(params.signer-email)
-        echo signer: $signer
-
-        echo ""
         echo "---------------------------------------------------------"
- 
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Generate signature for rsfile"
-        rsfilename="merged.yaml"
-        rsfile=$(find . -name "$rsfilename")
-        echo "rsfile $rsfile"
-
-        #rsfilebasename=$(basename -- "$rsfile")
-        #echo "rsfilebasename: $rsfilebasename"
-
-        #rsigfilename="rsig-$rsfilebasename"
-
-        
-        #if [ -f $rsigfilename ]; then
-        #   rm $rsigfilename
-        #fi
-
-        #/gpg-rs-sign.sh $signer $rsfile $rsigfilename
-
-        #echo ""
-        #echo "---------------------------------------------------------"
-        #echo "Content of ResourceSignature: $rsigfilename"
-        #cat $rsigfilename
-        #echo "---------------------------------------------------------"
-             
-        #echo ""
-        #echo "---------------------------------------------------------"
-        #echo "Set argocd wave annotation"
-        #cat $rsigfilename | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> copy-rsig-merged.yaml
-        #mv copy-rsig-merged.yaml $rsigfilename
- 
-        #echo ""
-        #echo "---------------------------------------------------------" 
-        #echo "Content of ResourceSignature: $rsigfilename"
-        #cat  $rsigfilename
-        #echo "---------------------------------------------------------" 
-        #echo ""
-        yq r -d'*' merged.yaml -j | while read doc;
-        do
-           kind=$(echo $doc | yq r - -j | jq -r '.kind')
-           if { [ $kind = 'Namespace' ] || [$kind = 'ResourceSignature'] || [$kind = 'ResourceSigningProfile'] } ; then
-              continue 
-           else
-              kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
-              splitrsfile="split-${kindlowcase}.yaml"
-              echo $doc > $splitrsfile 
-              rsigrscfile="rsig-${kindlowcase}.yaml"
-              copyrsigrscfile="copyrsig-${kindlowcase}.yaml"
-              /gpg-rs-sign.sh $signer $splitrsfile $rsigrscfile
-              cat $rsigrscfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> $copyrsigrscfile
-              mv $copyrsigrscfile $rsigrscfile
-              echo "---------------------------------------------------------"
-              echo "Content of ResourceSignature"
-              cat $rsigrscfile
-              echo "---------------------------------------------------------"
-              echo "" 
-              echo "---------------------------------------------------------"
-              #echo "Add $rsigrscfile to kustomization.yaml"
-              yq w -i  kustomization.yaml 'resources.[+]' "$rsigrscfile"
-              echo "---------------------------------------------------------"
-              echo ""
-           fi
-        done
-
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Completed signing artifacts"
-
-        #echo ""
-        #echo "---------------------------------------------------------"
-        #echo "Add $rsigfilename to kustomization.yaml"
-
-        #yq w -i  kustomization.yaml 'resources.[+]' "rsig-merged.yaml"
-        yq w -i  kustomization.yaml 'resources.[+]' "rsp-merged.yaml"
-
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Content of kustomization.yaml"
-        cat  kustomization.yaml
-        echo ""
-        echo ""
-        echo "Set argocd wave annotation"
-        cat rsp-merged.yaml | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-3"' | yq r - --prettyPrint >> copy-rsp-merged.yaml
-        mv copy-rsp-merged.yaml rsp-merged.yaml
-        echo ""
-        echo ""
-        echo "Remove temp files"
-        if [ -f temp-aaa.yaml ]; then
-           rm temp-aaa.yaml
-        fi
-        if [ -f temp-rsig.yaml ]; then
-           rm temp-rsig.yaml
-        fi
-        if [ -f merged.yaml ]; then
-           rm merged.yaml
-        fi
-    - name: push-generated-resources
-      image: quay.io/gajananan/gitops-sign-artifact:rc1
-      workingdir: /workspace/cicd
-      script: |
-        #!/bin/bash
-
-
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Configure Git Repo"
-        pwd
-        ls
- 
-        git config --global credential.helper store
-        git config --global user.email $(params.git-repo-user-email)
-        git config --global user.name $(params.git-repo-user-name)
-        git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    
-        git config --get remote.origin.fetch 
-
-        repourl=$(params.git-repo-url) 
-        echo repourl: $repourl
-        repourlwithtoken=$(echo $repourl | sed "s|github|$AUTH_TOKEN@github|g").git
-        git remote set-url origin  "$repourlwithtoken"
-        git fetch
-        echo ""
-        echo "---------------------------------------------------------"
-        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
-        echo ""
-        git status
         echo done
-
+        
         echo ""
-        echo "---------------------------------------------------------" 
-        echo "Push the generated resource to pre-stage branch"
-        git add namespace.yaml
-        #git add deployment.yaml
-        git add kustomization.yaml
-        #git add rsig-rpp-merged.yaml
-        git add rsp-merged.yaml
-        #git add rsig-merged.yaml
-
-        yq r -d'*' merged.yaml -j | while read doc;
-        do
-           if { [ $kind = 'Namespace' ] || [$kind = 'ResourceSignature'] || [$kind = 'ResourceSigningProfile'] } ; then
-              continue
-           else
-              kindlowcase=$(echo $kind | tr "[:upper:]" "[:lower:]")
-              rscfile="rsig-${kindlowcase}.yaml"
-              git add $rscfile
-           fi
-        done
-
-        git commit -m "Add generated resource protection profile and resources signature"
-        git push origin $(git rev-parse --abbrev-ref HEAD) &> /dev/null
-        echo "done"
-
- 
+        echo "---------------------------------------------------------"        
+        echo "Signer"
+        signer=$(params.signer-email)
+        echo signer: $signer        
         echo ""
-        echo "---------------------------------------------------------"
-        echo "Push changes from "$(params.source-branch)" to "$(params.dest-branch)" branch"
-        git push origin --delete "$(params.dest-branch)"
-        echo ""
-        git checkout -b "$(params.dest-branch)"
-        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
-        git status
-        echo ""
-        git push origin "$(params.dest-branch)"
-        echo "done"
+        echo done
+  
 
-      env:
-        - name: AUTH_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: image-updater-secret
-              key: token
+        if [ -f  $mergedrscfile ]; then
+           /gpg-rs-sign.sh $signer $mergedrscfile $mergedrsigrscfile
+
+        fi
