@@ -46,8 +46,8 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Clone artifacts $(params.source-branch) branch"
-        git fetch all
+        echo "Checkout artifacts $(params.source-branch) branch"
+        git fetch
         git checkout $(params.source-branch)
         git pull origin $(params.source-branch)
         echo ""
@@ -65,19 +65,17 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
-        echo "Clone artifacts $(params.dest-branch) branch"
-        git fetch all
-        dest-branch=$(git ls-remote origin stage-plus)
-        if [ -z $dest-branch ]; then
+        echo "Create $(params.dest-branch) or checkout artifacts $(params.dest-branch) branch"
+        dest_branch_exist=$(git ls-remote origin $(params.dest-branch))
+        if [ -z $dest_branch_exist ]; then
            git checkout -b $(params.dest-branch)
         else
            git checkout $(params.dest-branch)
-           git pull origin $(params.dest-branch)
         fi
         git merge $(params.source-branch)
         echo ""
         echo "---------------------------------------------------------"
-        echo "Current git branch: $(git rev-parse --abbrev-ref HEAD)"
+        echo "Check Current git branch: $(git rev-parse --abbrev-ref HEAD)"
         echo ""
         echo done
 
