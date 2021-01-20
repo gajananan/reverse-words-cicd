@@ -217,8 +217,9 @@ spec:
 
         /generate-combined.rs.sh $mergedrscfile $mergedrsigrscfile $rsfile
 
-        cat $rsfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> $copyrsfile
-        mv $copyrsfile $rsfile
+        #cat $rsfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> $copyrsfile
+        #mv $copyrsfile $rsfile
+        yq w -i -d'*' $rsfile 'metadata.annotations."argocd.argoproj.io/sync-wave"' -- "lsstr -2"
         # dont use the folllowing
         #yq w -i -d'*' $rsfile 'metadata.annotations."argocd.argoproj.io/sync-wave"' -- "-2"
     
