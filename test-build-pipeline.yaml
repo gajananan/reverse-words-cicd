@@ -52,41 +52,41 @@ spec:
     type: string
   tasks:
 
-  - name: lint
-    taskRef:
-      name: golangci-lint
-    params:
-      - name: package
-        value: github.com/gajananan/reverse-words
-      - name: flags
-        value: --verbose
-      - name: GOOS
-        value: "linux"
-    resources:
-      inputs:
-      - name: source
-        resource: app-git
+#  - name: lint
+#    taskRef:
+#      name: golangci-lint
+#    params:
+#      - name: package
+#        value: github.com/gajananan/reverse-words
+#      - name: flags
+#        value: --verbose
+#      - name: GOOS
+#        value: "linux"
+#    resources:
+#      inputs:
+#      - name: source
+#        resource: app-git
 
-  - name: test
-    taskRef:
-      name: golang-test
-    runAfter:
-      - lint
-    params:
-      - name: package
-        value: github.com/gajananan/reverse-words
-      - name: GOOS
-        value: "linux"
-    resources:
-      inputs:
-      - name: source
-        resource: app-git
+#  - name: test
+#    taskRef:
+#      name: golang-test
+#    runAfter:
+#      - lint
+#    params:
+#      - name: package
+#        value: github.com/gajananan/reverse-words
+#      - name: GOOS
+#        value: "linux"
+#    resources:
+#      inputs:
+#      - name: source
+#        resource: app-git
 
   - name: build-and-push
     taskRef:
       name: build-from-dockerfile
-    runAfter:
-      - test
+#    runAfter:
+#      - test
     params:
       - name: DOCKERFILE_PATH
         value: "./Dockerfile"
