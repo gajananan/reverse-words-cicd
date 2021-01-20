@@ -218,6 +218,14 @@ spec:
 
         yq w -i -d'*' $rsfile 'metadata.annotations."argocd.argoproj.io/sync-wave"' -- "-2"
     
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Content of kustomization.yaml"
+        yq w -i  kustomization.yaml 'resources.[+]' "$rsfile"
+        cat  kustomization.yaml
+        echo ""
+        echo done
+
     - name: push-generated-resources
       image: quay.io/gajananan/gitops-sign-artifact:rc1
       workingdir: /workspace/cicd
