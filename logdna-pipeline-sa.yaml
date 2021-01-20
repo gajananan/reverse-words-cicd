@@ -4,7 +4,6 @@ metadata:
   name: ie-pipeline
 secrets:
   - name: quay-user-pass
-  - name: pipeline-keyring-secret
   - name: image-updater-secret
 imagePullSecrets:
   - name: registry-secret
