@@ -5,6 +5,7 @@ commonLabels:
 namespace: reverse-words-stage
 patchesStrategicMerge:
   - deployment.yaml
+
 resources:
   - namespace.yaml
   - ingress.yaml
