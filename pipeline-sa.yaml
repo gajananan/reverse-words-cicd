@@ -4,7 +4,6 @@ metadata:
   name: reversewords-pipeline
 secrets:
   - name: quay-user-pass
-  - name: ie-kubeconfig-secret
   - name: image-updater-secret
 imagePullSecrets:
   - name: registry-secret
