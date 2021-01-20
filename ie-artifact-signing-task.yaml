@@ -165,6 +165,7 @@ spec:
         mergedrscfile="merged.yaml"
         mergedrsigrscfile="rsig-merged.yaml"
         rsfile="rs.yaml"
+        copyrsfile="copy-rs.yaml"
         echo ""
         echo "---------------------------------------------------------"
         echo "Retrive keyring-secret"       
@@ -216,7 +217,10 @@ spec:
 
         /generate-combined.rs.sh $mergedrscfile $mergedrsigrscfile $rsfile
 
-        yq w -i -d'*' $rsfile 'metadata.annotations."argocd.argoproj.io/sync-wave"' -- "-2"
+        cat $rsfile | yq r - -j | jq -r '.metadata.annotations."argocd.argoproj.io/sync-wave"="-2"' | yq r - --prettyPrint >> $copyrsfile
+        mv $copyrsfile $rsfile
+        # dont use the folllowing
+        #yq w -i -d'*' $rsfile 'metadata.annotations."argocd.argoproj.io/sync-wave"' -- "-2"
     
         echo ""
         echo "---------------------------------------------------------"
