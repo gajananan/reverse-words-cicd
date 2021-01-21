@@ -9,3 +9,5 @@ resources:
   - namespace.yaml
   - ingress.yaml
   - sealed-registry-secret.yaml
+  - rsp.yaml
+  - rs.yaml

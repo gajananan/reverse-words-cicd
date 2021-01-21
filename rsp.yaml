@@ -1,0 +1,25 @@
+apiVersion: apis.integrityshield.io/v1alpha1
+kind: ResourceSigningProfile
+metadata:
+  name: rsp-merged
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  protectRules:
+    - match:
+        - kind: Service
+        - kind: Deployment
+        - kind: SealedSecret
+        - kind: Ingress
+  unprotectAttrs:
+    - attrs:
+        - metadata.labels.app.kubernetes.io/instance
+      match:
+        - kind: Service
+          name: reverse-words
+        - kind: Deployment
+          name: reverse-words
+        - kind: SealedSecret
+          name: registry-secret
+        - kind: Ingress
+          name: reverse-words
