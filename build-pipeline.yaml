@@ -92,6 +92,8 @@ spec:
         value: "./Dockerfile"
       - name: IMAGE_TAG
         value: "$(params.imageTag)"
+      - name: signer-email
+        value: "$(params.signer-email)"
     resources:
       inputs:
       - name: source
