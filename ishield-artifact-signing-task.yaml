@@ -389,22 +389,22 @@ spec:
         echo ""
         echo done
 
-        IMAGE_URL="https://us.icr.io/api/v1/images/${NEW_IMAGE_URL}/json"
-        TOKEN=$(echo ${IBMCLOUD_AUTH_TOKEN} | cut -d':' -f2)
-        image_digest_res=$(curl -X GET   -H "accept: application/json"  \
-                             -H "Account: e97a8c01ac694e308ef3ad7795e2f769" \
-                             -H "Authorization: Bearer ${TOKEN}" \
-                             --url ${IMAGE_URL})
+        #IMAGE_URL="https://us.icr.io/api/v1/images/${NEW_IMAGE_URL}/json"
+        #TOKEN=$(echo ${IBMCLOUD_AUTH_TOKEN} | cut -d':' -f2)
+        #image_digest_res=$(curl -X GET   -H "accept: application/json"  \
+        #                     -H "Account: e97a8c01ac694e308ef3ad7795e2f769" \
+        #                     -H "Authorization: Bearer ${TOKEN}" \
+        #                     --url ${IMAGE_URL})
 
-        echo image_digest_res: $image_digest_res
-        image_digest=$(echo $image_digest_res | jq -c '.Id' | tr -d '"')
+        #echo image_digest_res: $image_digest_res
+        #image_digest=$(echo $image_digest_res | jq -c '.Id' | tr -d '"')
        
-        echo image_digest: $image_digest
+        #echo image_digest: $image_digest
 
-        if [ ! -z  image_digest_json ]; then
-           SHA_IMAGE_URL="$(echo ${NEW_IMAGE_URL} | cut -d':' -f1):$image_digest"
-           yq w -i deployment.yaml 'spec.template.spec.containers[0].image' "$SHA_IMAGE_URL"
-        fi
+        #if [ ! -z  image_digest_json ]; then
+        #   SHA_IMAGE_URL="$(echo ${NEW_IMAGE_URL} | cut -d':' -f1):$image_digest"
+        #   yq w -i deployment.yaml 'spec.template.spec.containers[0].image' "$SHA_IMAGE_URL"
+        #fi
          
         echo ""
         echo "---------------------------------------------------------"
