@@ -8,5 +8,5 @@ patchesStrategicMerge:
 resources:
   - namespace.yaml
   - ingress.yaml
-  - sealed-registry-secret.yaml
+  - sealed-mappregkey.yaml
   - sealed-image-keyring-secrey.yaml
