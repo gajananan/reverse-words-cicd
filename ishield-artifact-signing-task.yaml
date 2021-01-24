@@ -119,8 +119,17 @@ spec:
 
         echo ""
         echo "---------------------------------------------------------"
+        echo "Commit changes to kustomization.yaml"
+        git add kustomization.yaml
+        git commit -m "removed IShield resources from kustomization.yaml"
+        echo ""
+        echo done
+        
+        echo ""
+        echo "---------------------------------------------------------"
         echo "Git merge from $(params.source-branch) to $(params.dest-branch)"
         git merge $(params.source-branch)
+        git checkout --theirs deployment.yaml
         echo ""
         echo "---------------------------------------------------------"
         echo "Check Current git branch: $(git rev-parse --abbrev-ref HEAD)"
