@@ -43,6 +43,7 @@ spec:
         rspfile="rsp.yaml"
         copyrspfile="copy-rsp.yaml"
         rsfile="rs.yaml"
+        image_policy="image_policy.yaml"
 
         echo ""
         echo "---------------------------------------------------------"
@@ -106,6 +107,7 @@ spec:
         echo "Remove IShield resources from  kustomization.yaml "
         yq d -i kustomization.yaml "resources.[$rspfile]"
         yq d -i kustomization.yaml "resources.[$rsfile]"
+        yq d -i kustomization.yaml "resources.[$image_policy]"
         echo ""
         echo done
 
@@ -142,6 +144,9 @@ spec:
         if [ -f $rsfile ]; then
            rm $rsfile
         fi 
+        if [ -f $image_policy ]
+           rm $image_policy
+        fi
         echo ""
         echo done
 
@@ -289,6 +294,22 @@ spec:
 
         rm tmp-*
 
+        /generate_image_policy.sh "image-policy" gajan-pubkey "us.icr.io/mutation-advisor/*" image_policy.yaml
+        image_policy="image_policy.yaml"
+
+        if [ -f $image_policy ]; then
+           yq w -i -d'*' $image_policy 'metadata.annotations."argocd.argoproj.io/sync-wave"' -- "lsstr -2"
+           echo ""
+           echo "---------------------------------------------------------"
+           echo "Content of kustomization.yaml"
+           image_policye_exist=$(cat kustomization.yaml | yq r - "resources(.==$image_policy)")
+           if [ -z $image_policye_exist ]; then
+             yq w -i  kustomization.yaml 'resources.[+]' "$image_policy"
+           fi
+           cat  kustomization.yaml
+           echo ""
+           echo done
+        fi
     - name: push-generated-resources
       image: quay.io/gajananan/gitops-sign-artifact:rc1
       workingdir: /workspace/cicd-git
@@ -327,6 +348,7 @@ spec:
         git add namespace.yaml
         git add kustomization.yaml
         git add deployment.yaml
+        git add image_policy.yaml
         git add $rspfile
         git add $rsfile
 
@@ -339,5 +361,5 @@ spec:
         - name: AUTH_TOKEN
           valueFrom:
             secretKeyRef:
-              name: ibmcloud-token-secret
+              name: image-updater-secret
               key: token

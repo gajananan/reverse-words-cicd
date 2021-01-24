@@ -47,7 +47,6 @@ spec:
            gpg --list-secret-keys &&
            gpg --list-keys &&
            echo SIGNER_EMAIL: ${SIGNER_EMAIL} &&
-           #echo AUTH_TOKEN: ${AUTH_TOKEN} &&
            echo TLSVERIFY: ${TLSVERIFY} &&
            echo IMAGE_URL: ${IMAGE_URL} &&
            echo IMAGE_TAG: ${IMAGE_TAG} &&
