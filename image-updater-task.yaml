@@ -45,6 +45,17 @@ spec:
       description: Allow insecure server connections when using SSL
       default: "false"
   steps:
+    - name: image-pull
+      image: quay.io/buildah/stable
+      command: ["/bin/sh"]
+      args:
+        - -c
+        - >-
+             echo new-image-url: $(params.new-image-url)"
+             buildah pull --creds=${IBM_CLOUD_TOKEN} $(params.new-image-url)"
+             digest=$(buildah inspect --format {{'.FromImageDigest'}} $(params.new-image-url)" 2> /dev/null | grep sha256)
+             export NEW_IMAGE_URL="$($(params.new-image-url)" | cut -d':' -f1):${digest}"
+             echo NEW_IMAGE_URL: $NEW_IMAGE_URL
     - name: update-image
       image: bigkevmcd/image-updater:latest
       args:
@@ -52,7 +63,8 @@ spec:
         - "--driver=$(params.driver)"
         - "--file-path=$(params.file-path)"
         - "--image-repo=$(params.image-repo)"
-        - "--new-image-url=$(params.new-image-url)"
+        - "--new-image-url=${NEW_IMAGE_URL}"
+        #- "--new-image-url=$(params.new-image-url)"
         - "--source-branch=$(params.source-branch)"
         - "--source-repo=$(params.source-repo)"
         - "--update-key=$(params.update-key)"
@@ -65,3 +77,8 @@ spec:
             secretKeyRef:
               name: image-updater-secret
               key: token
+        - name: IBM_CLOUD_TOKEN
+          valueFrom:  
+             secretKeyRef:
+               name: ibmcloud-token-secret
+               key: token             
