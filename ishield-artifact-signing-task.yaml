@@ -30,6 +30,8 @@ spec:
       type: string
     - name: image-registry
       type: string
+    - name: new-image-url
+      type: string
   volumes:
     - name: secring-secret-volume
       secret:
@@ -355,6 +357,20 @@ spec:
         echo ""
         echo done
 
+        IMAGE_URL="https://$(params.new-image-url)/json"
+        TOKEN=$(echo ${IBMCLOUD_AUTH_TOKEN} | cut -d':' -f2)
+        image_digest_json=$(curl -X GET   -H "accept: application/json"  \
+                             -H "Account: e97a8c01ac694e308ef3ad7795e2f769" \
+                             -H "Authorization: Bearer ${TOKEN} \
+                             --url ${IMAGE_URL} | jq -c '.Id'
+       
+        echo image_digest_json: $image_digest_json
+
+        if [ ! -z  image_digest_json ]; then
+            
+        fi
+         
+        
         echo ""
         echo "---------------------------------------------------------" 
         echo "Push the generated resource to $(params.dest-branch) branch"
@@ -376,3 +392,8 @@ spec:
             secretKeyRef:
               name: image-updater-secret
               key: token
+        - name: IBMCLOUD_AUTH_TOKEN
+          valueFrom:
+             secretKeyRef:
+               name: ibmcloud-token-secret
+               key: token

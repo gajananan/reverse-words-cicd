@@ -163,6 +163,8 @@ spec:
         value: $(params.signer-pubkey-secret)
       - name: image-registry
         value: $(params.image-registry)
+      - name: new-image-url
+        value:  "us.icr.io/mutation-advisor/tekton-reversewords:$(params.imageTag)"
     resources:
       inputs:
       - name: cicd-git
