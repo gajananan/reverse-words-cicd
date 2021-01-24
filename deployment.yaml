@@ -11,11 +11,11 @@ spec:
   template:
     spec:
       containers:
-        - env:
-            - name: RELEASE
-              value: Stage Release
-            - $patch: replace
-          image: us.icr.io/mutation-advisor/tekton-reversewords:sha256:e587b2b0e0a758be79114fc72d25c100b16d1b0fa7adaafe663b5f52fa84f156
-          name: reverse-words
+      - env:
+        - name: RELEASE
+          value: Stage Release
+        - $patch: replace
+        image: us.icr.io/mutation-advisor/tekton-reversewords:2f68f8b72a392c45ccbd83efcd458fc4855a4114
+        name: reverse-words
       imagePullSecrets:
-        - name: mappregkey
+      - name: mappregkey
