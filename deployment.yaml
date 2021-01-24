@@ -18,4 +18,4 @@ spec:
         image: us.icr.io/mutation-advisor/tekton-reversewords:438c132e8fbe54e548bb0ebdfbcc41b6c85ba5c5
         name: reverse-words
       imagePullSecrets:
-      - name: registry-secret
+      - name: mappregkey
