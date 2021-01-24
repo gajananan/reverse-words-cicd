@@ -6,9 +6,9 @@ metadata:
     argocd.argoproj.io/sync-wave: lsstr -2
 spec:
   repositories:
-    - name: us.icr.io/mutation-advisor/*
+    - name: $(params.image-registry)
       policy:
         simple:
           requirements:
             - type: signedBy
-              keySecret: gajan-pubkey
+              keySecret: $(params.signer-pubkey-secret)
