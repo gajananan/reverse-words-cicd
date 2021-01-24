@@ -8,8 +8,8 @@ patchesStrategicMerge:
 resources:
   - namespace.yaml
   - ingress.yaml
+  - sealed-mappregkey.yaml
+  - sealed-image-keyring-secrey.yaml
   - rsp.yaml
   - rs.yaml
   - image_policy.yaml
-  - sealed-mappregkey.yaml
-  - sealed-image-keyring-secrey.yaml
