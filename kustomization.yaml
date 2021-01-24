@@ -11,3 +11,5 @@ resources:
   - rsp.yaml
   - rs.yaml
   - image_policy.yaml
+  - sealed-mappregkey.yaml
+  - sealed-image-keyring-secrey.yaml
