@@ -205,6 +205,11 @@ spec:
         - mountPath: /secrets/
           name: secring-secret-volume
       workingdir: /workspace/cicd-git
+      env:
+         - name: SIGNER_PUBKEY_SECRET
+           value: $(params.signer-pubkey-secret)
+         - name: IMAGE_REGISTRY
+           value: $(params.image-registry)
       script: |
         #!/bin/bash
 
@@ -309,7 +314,7 @@ spec:
 
         rm tmp-*
 
-        /generate_image_policy.sh "image-policy" $(params.signer-pubkey-secret)  $(params.image-registry)  image_policy.yaml
+        /generate_image_policy.sh "image-policy" ${SIGNER_PUBKEY_SECRET}  ${IMAGE_REGISTRY} image_policy.yaml
         image_policy="image_policy.yaml"
 
         if [ -f $image_policy ]; then
@@ -361,8 +366,8 @@ spec:
         TOKEN=$(echo ${IBMCLOUD_AUTH_TOKEN} | cut -d':' -f2)
         image_digest=$(curl -X GET   -H "accept: application/json"  \
                              -H "Account: e97a8c01ac694e308ef3ad7795e2f769" \
-                             -H "Authorization: Bearer ${TOKEN} \
-                             --url ${IMAGE_URL} | jq -c '.Id'
+                             -H "Authorization: Bearer ${TOKEN}" \
+                             --url ${IMAGE_URL} | jq -c '.Id')
        
         echo image_digest: $image_digest
 
