@@ -15,7 +15,7 @@ spec:
         - name: RELEASE
           value: Stage Release
         - $patch: replace
-        image: us.icr.io/mutation-advisor/tekton-reversewords:980d1e851cfc127815e6252f44a6b237b7fc3b51
+        image: us.icr.io/mutation-advisor/tekton-reversewords:5ed733d26facc9830051f0959f081a3718f44afa
         name: reverse-words
       imagePullSecrets:
       - name: mappregkey
