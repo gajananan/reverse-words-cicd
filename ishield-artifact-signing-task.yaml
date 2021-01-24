@@ -26,6 +26,10 @@ spec:
       type: string
     - name: ignore-attrs
       type: string 
+    - name: signer-pubkey-secret
+      type: string
+    - name: image-registry
+      type: string
   volumes:
     - name: secring-secret-volume
       secret:
@@ -303,7 +307,7 @@ spec:
 
         rm tmp-*
 
-        /generate_image_policy.sh "image-policy" gajan-pubkey "us.icr.io/mutation-advisor/*" image_policy.yaml
+        /generate_image_policy.sh "image-policy" $(params.signer-pubkey-secret)  $(params.image-registry)  image_policy.yaml
         image_policy="image_policy.yaml"
 
         if [ -f $image_policy ]; then

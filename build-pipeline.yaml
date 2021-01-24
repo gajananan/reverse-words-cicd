@@ -51,6 +51,10 @@ spec:
     type: string
   - name: cicd-git-user-name
     type: string
+  - name: signer-pubkey-secret
+    type: string
+  - name: image-registry
+    type: string
 #  - name: source-branch
 #    type: string
 #  - name: dest-branch
@@ -155,6 +159,10 @@ spec:
         value: $(params.cicd-git-user-name)
       - name: ignore-attrs
         value: "false"
+      - name: signer-pubkey-secret
+        value: $(params.signer-pubkey-secret)
+      - name: image-registry
+        value: $(params.image-registry)
     resources:
       inputs:
       - name: cicd-git

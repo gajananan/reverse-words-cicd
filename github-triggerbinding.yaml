@@ -16,3 +16,7 @@ spec:
       value: gajan@jp.ibm.com
     - name: signer-email
       value: signer@enterprise.com
+    - name: signer-pubkey-secret
+      value: signer-pubkey
+    - name: image-registry
+      value: us.icr.io/mutation-advisor/*     

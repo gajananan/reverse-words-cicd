@@ -17,6 +17,10 @@ spec:
       description: user name for the cicd git repo url
     - name: signer-email
       description: email of the artifacts signer
+    - name: signer-pubkey-secret
+      description: signer-pubkey scret
+    - name: image-registry
+      description: image registry   
   resourcetemplates:
     - apiVersion: tekton.dev/v1alpha1
       kind: PipelineResource
@@ -71,6 +75,10 @@ spec:
             value: $(params.cicd-git-user-email)
           - name: cicd-git-user-name
             value: $(params.cicd-git-user-name)
+          - name: signer-pubkey-secret
+            value: $(params.signer-pubkey-secret)
+          - name: image-registry
+            value: $(params.image-registry)
         resources:
           - name: app-git
             resourceRef:
