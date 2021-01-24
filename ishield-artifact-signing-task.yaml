@@ -144,7 +144,7 @@ spec:
         if [ -f $rsfile ]; then
            rm $rsfile
         fi 
-        if [ -f $image_policy ]
+        if [ -f $image_policy ]; then
            rm $image_policy
         fi
         echo ""
