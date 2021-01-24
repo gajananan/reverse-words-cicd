@@ -21,7 +21,8 @@ spec:
   type: image
   params:
   - name: url
-    value: quay.io/gajananan/tekton-reversewords
+    value: us.icr.io/mutation-advisor/tekton-reversewords
+    #quay.io/gajananan/tekton-reversewords
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: Pipeline
@@ -113,9 +114,11 @@ spec:
       - name: file-path
         value: "deployment.yaml"
       - name: image-repo
-        value: "quay.io/gajananan/tekton-reversewords"
+        value: "us.icr.io/mutation-advisor/tekton-reversewords"
+        #"quay.io/gajananan/tekton-reversewords"
       - name: new-image-url
-        value: "quay.io/gajananan/tekton-reversewords:$(params.imageTag)"
+        value:  "us.icr.io/mutation-advisor/tekton-reversewords:$(params.imageTag)"
+        #"quay.io/gajananan/tekton-reversewords:$(params.imageTag)"
       - name: source-branch
         value: "stage"
       - name: source-repo
