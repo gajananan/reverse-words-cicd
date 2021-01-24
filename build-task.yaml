@@ -24,7 +24,6 @@ spec:
     resources:
     - name: image
       type: image
-
   steps:
   - name: build
     image: quay.io/buildah/stable
@@ -38,19 +37,49 @@ spec:
 
   - name: push
     image: quay.io/buildah/stable
-    command: ['buildah', 'push', '--sign-by==$(inputs.params.signer-email)' , '--creds=$AUTH_TOKEN' ,'--storage-driver=vfs', '--tls-verify=$(inputs.params.TLSVERIFY)', '$(outputs.resources.image.url):$(inputs.params.IMAGE_TAG)', 'docker://$(outputs.resources.image.url):$(inputs.params.IMAGE_TAG)']
+    #command: ['buildah', 'push', '--sign-by==$(inputs.params.signer-email)' , '--creds=$AUTH_TOKEN' ,'--storage-driver=vfs', '--tls-verify=$(inputs.params.TLSVERIFY)', '$(outputs.resources.image.url):$(inputs.params.IMAGE_TAG)', 'docker://$(outputs.resources.image.url):$(inputs.params.IMAGE_TAG)']
+    command: ["/bin/sh"]
+    args:
+      - -c
+      - >-
+           cat /secrets/secring.gpg > /tmp/tmp-secring.gpg &&
+           gpg --import /tmp/tmp-secring.gpg &&
+           gpg --list-secret-keys &&
+           gpg --list-keys &&
+           echo SIGNER_EMAIL: ${SIGNER_EMAIL} &&
+           echo AUTH_TOKEN: ${AUTH_TOKEN} &&
+           echo TLSVERIFY: ${TLSVERIFY} &&
+           echo IMAGE_URL: ${IMAGE_URL} &&
+           echo IMAGE_TAG: ${IMAGE_TAG} &&
+           echo OUT_IMAGE_URL: ${OUT_IMAGE_URL} &&
+           buildah push --sign-by=${SIGNER_EMAIL} --creds=${AUTH_TOKEN} --storage-driver=vfs --tls-verify=${TLSVERIFY} ${IMAGE_URL}:${IMAGE_TAG} docker://${OUT_IMAGE_URL}:${IMAGE_TAG}
+
     volumeMounts:
     - name: varlibcontainers
       mountPath: /var/lib/containers
+    - name: secring-secret-volume
+      mountPath: /secrets/
     securityContext:
       privileged: true
     env:
+      - name: SIGNER_EMAIL
+        value: $(inputs.params.signer-email)
+      - name: TLSVERIFY
+        value: $(inputs.params.TLSVERIFY)
+      - name: IMAGE_URL
+        value: $(outputs.resources.image.url)
+      - name: IMAGE_TAG
+        value: $(inputs.params.IMAGE_TAG)
+      - name: OUT_IMAGE_URL
+        value: $(outputs.resources.image.url)
       - name: AUTH_TOKEN
         valueFrom:
            secretKeyRef:
              name: ibmcloud-token-secret
              key: token
-
   volumes:
   - name: varlibcontainers
     emptyDir: {}
+  - name: secring-secret-volume
+    secret:
+        secretName: pipeline-keyring-secret
