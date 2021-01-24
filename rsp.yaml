@@ -8,7 +8,7 @@ spec:
   protectRules:
     - match:
         - kind: Service
-        - kind: Deployment
+        - kind: null
         - kind: SealedSecret
         - kind: SealedSecret
         - kind: Ingress
@@ -18,8 +18,8 @@ spec:
       match:
         - kind: Service
           name: reverse-words
-        - kind: Deployment
-          name: reverse-words
+        - kind: null
+          name: null
         - kind: SealedSecret
           name: gajan-pubkey
         - kind: SealedSecret

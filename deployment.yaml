@@ -15,7 +15,7 @@ spec:
             - name: RELEASE
               value: Stage Release
             - $patch: replace
-          image:
+          image: '"sha256:97832a95fb511288ca5180aa1e59ccd96746ca755a19f44360be2ddad4cde29b"'
           name: reverse-words
       imagePullSecrets:
         - name: mappregkey
