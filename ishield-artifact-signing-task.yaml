@@ -359,18 +359,23 @@ spec:
 
         IMAGE_URL="https://$(params.new-image-url)/json"
         TOKEN=$(echo ${IBMCLOUD_AUTH_TOKEN} | cut -d':' -f2)
-        image_digest_json=$(curl -X GET   -H "accept: application/json"  \
+        image_digest=$(curl -X GET   -H "accept: application/json"  \
                              -H "Account: e97a8c01ac694e308ef3ad7795e2f769" \
                              -H "Authorization: Bearer ${TOKEN} \
                              --url ${IMAGE_URL} | jq -c '.Id'
        
-        echo image_digest_json: $image_digest_json
+        echo image_digest: $image_digest
 
         if [ ! -z  image_digest_json ]; then
-            
+           yq w -i deployment.yaml 'spec.template.spec.containers[0].image' "$image_digest"            
         fi
          
-        
+        echo ""
+        echo "---------------------------------------------------------"
+        echo "Content of deployment.yaml"
+        cat deployment.yaml
+        echo done
+        echo ""
         echo ""
         echo "---------------------------------------------------------" 
         echo "Push the generated resource to $(params.dest-branch) branch"
