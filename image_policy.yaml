@@ -1,7 +1,9 @@
 apiVersion: portieris.cloud.ibm.com/v1
 kind: ImagePolicy
 metadata:
-  name: ""
+  name: image-policy
+  annotations:
+    argocd.argoproj.io/sync-wave: lsstr -2
 spec:
   repositories:
     - name: us.icr.io/mutation-advisor/*
