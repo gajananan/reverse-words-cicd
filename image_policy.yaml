@@ -1,0 +1,12 @@
+apiVersion: portieris.cloud.ibm.com/v1
+kind: ImagePolicy
+metadata:
+  name: ""
+spec:
+  repositories:
+    - name: us.icr.io/mutation-advisor/*
+      policy:
+        simple:
+          requirements:
+            - type: signedBy
+              keySecret: gajan-pubkey

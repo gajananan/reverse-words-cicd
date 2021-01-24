@@ -1,6 +1,6 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: reverse-words-stage
   annotations:
     argocd.argoproj.io/sync-wave: "-4"
+  name: reverse-words-stage
