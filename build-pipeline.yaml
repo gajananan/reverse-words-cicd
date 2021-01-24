@@ -160,9 +160,11 @@ spec:
       - name: ignore-attrs
         value: "false"
       - name: signer-pubkey-secret
-        value: $(params.signer-pubkey-secret)
+        value: "signer-pubkey"
+       #$(params.signer-pubkey-secret)
       - name: image-registry
-        value: $(params.image-registry)
+        value: "us.icr.io/mutation-advisor/*"
+       #$(params.image-registry)
       - name: new-image-url
         value:  "us.icr.io/mutation-advisor/tekton-reversewords:$(params.imageTag)"
     resources:
