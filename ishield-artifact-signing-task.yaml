@@ -89,8 +89,9 @@ spec:
 
         echo image_digest: $image_digest
 
+        SHA_IMAGE_URL=$(echo ${NEW_IMAGE_URL} | cut -d':' -f1):$image_digest"
         if [ ! -z  image_digest_json ]; then
-           yq w -i deployment.yaml 'spec.template.spec.containers[0].image' "$image_digest"
+           yq w -i deployment.yaml 'spec.template.spec.containers[0].image' "$SHA_IMAGE_URL"
         fi
 
         echo ""
@@ -400,8 +401,9 @@ spec:
        
         echo image_digest: $image_digest
 
+        SHA_IMAGE_URL=$(echo ${NEW_IMAGE_URL} | cut -d':' -f1):$image_digest"
         if [ ! -z  image_digest_json ]; then
-           yq w -i deployment.yaml 'spec.template.spec.containers[0].image' "$image_digest"            
+           yq w -i deployment.yaml 'spec.template.spec.containers[0].image' "$SHA_IMAGE_URL"
         fi
          
         echo ""
