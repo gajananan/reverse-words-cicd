@@ -87,7 +87,7 @@ spec:
       - name: source
         resource: app-git
 
-  - name: build-and-push
+  - name: build-sign-and-push
     taskRef:
       name: build-from-dockerfile
     runAfter:
@@ -111,7 +111,7 @@ spec:
     taskRef:
       name: image-updater
     runAfter:
-      - build-and-push
+      - build-sign-and-push
     params:
       - name: driver
         value: "github"
@@ -136,6 +136,8 @@ spec:
   - name: ishield-artifact-signing-task
     taskRef:
       name: ishield-artifact-signing-task
+    runAfter:
+      - update-stage-deployment-image
     params:
       - name: source-branch
         value: "stage"

@@ -56,7 +56,7 @@ spec:
         pipelineRef:
           name: reverse-words-build-pipeline
         serviceAccountNames:
-          - taskName: build-and-push
+          - taskName: build-sign-and-push
             serviceAccountName: reversewords-pipeline
           - taskName: ie-artifact-signing-task
             serviceAccountName: reversewords-pipeline
