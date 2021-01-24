@@ -51,6 +51,10 @@ spec:
     type: string
   - name: cicd-git-user-name
     type: string
+#  - name: source-branch
+#    type: string
+#  - name: dest-branch
+#    type: string
   tasks:
 
   - name: lint
@@ -129,3 +133,27 @@ spec:
         value: "true"
       - name: branch-generate-name
         value: ""
+  - name: ishield-artifact-signing-task
+    taskRef:
+      name: ishield-artifact-signing-task
+    params:
+      - name: source-branch
+        value: "stage"
+        #$(params.source-branch)
+      - name: dest-branch
+        value:  "stage-plus"
+        #$(params.dest-branch)
+      - name: signer-email
+        value: $(params.signer-email)
+      - name: git-repo-url
+        value: $(params.cicd-git-url)
+      - name: git-repo-user-email
+        value: $(params.cicd-git-user-email)
+      - name: git-repo-user-name
+        value: $(params.cicd-git-user-name)
+      - name: ignore-attrs
+        value: "false"
+    resources:
+      inputs:
+      - name: cicd-git
+        resource: cicd-git
